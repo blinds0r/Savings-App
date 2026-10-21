@@ -15,7 +15,6 @@ jobs:
       - uses: expo/expo-github-action@v8
         with: { eas-version: latest, token: ${{ secrets.EXPO_TOKEN }} }
       - run: npm ci
-      - run: npx tsc --noEmit -p .
-      - run: npm test -- --ci
+      - run: npm run check
       - name: Build
         run: eas build --platform ${{ github.event.inputs.platform || 'android' }} --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive --no-wait

@@ -47,7 +47,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "check": "python3 scripts/check-worklets.py && tsc --noEmit -p . && jest"
   },
   "private": true
 }

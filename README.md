@@ -10,7 +10,7 @@ Expo (React Native) · Skia for the visuals · everything stored on the phone, n
 npm install
 npx expo start            # scan the QR code with Expo Go on a phone
 npm test                  # logic tests (TZ=America/New_York npm test to match the design's timezone)
-npx tsc --noEmit -p .     # types
+npm run check             # worklet scan (scripts/check-worklets.py) + types + tests — run before every build
 npx expo lint
 ```
 
