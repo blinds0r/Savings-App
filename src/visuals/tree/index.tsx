@@ -43,7 +43,7 @@ const FRUIT_AT = [[118, 140], [232, 132], [128, 92], [216, 80], [66, 146], [282,
 const count = (st: VisualState) => (st.pct > 0 ? Math.max(1, Math.round(Math.min(st.pct, 1) * N)) : 0);
 const per = (st: VisualState) => st.goal / N;
 const fallenCount = (st: VisualState) => (st.surplus > 0 ? Math.min(FMAX, Math.ceil(st.surplus / per(st))) : 0);
-const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+function clamp(v: number, a: number, b: number) { "worklet"; return Math.max(a, Math.min(b, v)); }
 
 /* ---------- worklet helpers ---------- */
 /** Piecewise keyframes with ease-in-out between keys. */

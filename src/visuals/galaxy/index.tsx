@@ -41,7 +41,7 @@ const FX: number[] = [], FY: number[] = [], FR: number[] = [], FA: number[] = []
 }
 const count = (st: VisualState) => (st.pct > 0 ? Math.max(1, Math.round(Math.min(st.pct, 1) * N)) : 0);
 const per = (st: VisualState) => st.goal / N;
-const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+function clamp(v: number, a: number, b: number) { "worklet"; return Math.max(a, Math.min(b, v)); }
 
 /* ---------- worklet helpers ---------- */
 function kf(t: number, ts: number[], vs: number[]): number {
