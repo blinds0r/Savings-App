@@ -282,11 +282,11 @@ function Garden({ clock }: { clock: SharedValue<number> }) {
 const Scene = forwardRef<SceneHandle, SceneProps>(function TreeScene({ state, width, height, motion, background }, ref) {
   const fit = useMemo(() => fitBox(BOX, width, height), [width, height]);
   const n = count(state), m = fallenCount(state);
-  const nRef = useRef(n); nRef.current = n;
-  const stateRef = useRef(state); stateRef.current = state;
+  const nRef = useRef(n), stateRef = useRef(state);
+  useEffect(() => { nRef.current = n; stateRef.current = state; }, [n, state]);
 
   const clock = useSharedValue(0);
-  useFrameCallback((info) => { clock.value = info.timeSinceFirstFrame / 1000; });
+  useFrameCallback((f) => { clock.value += Math.min(f.timeSincePreviousFrame ?? 0, 100) / 1000; });
   const addT = useSharedValue(0), msT = useSharedValue(0);
   const add = useSharedValue<AddInfo>({ on: false, n: 0, k: 1, dur: 1, seed: 0 });
   const ms = useSharedValue<MsInfo>({ on: false, seed: 0 });

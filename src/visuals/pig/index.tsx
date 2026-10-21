@@ -182,7 +182,8 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function PigScene({ state, wid
   const clock = useSharedValue(0), addT = useSharedValue(0), msT = useSharedValue(0);
   const addDur = useSharedValue(addDurFor(1)), kSV = useSharedValue(0), tgt = useSharedValue<number[]>([]);
   const [plan, setPlan] = useState<Plan | null>(null);
-  useFrameCallback((f) => { clock.value = f.timeSinceFirstFrame / 1000; });
+  // Accumulate deltas: timeSinceFirstFrame restarts whenever the callback is re-registered (every re-render).
+  useFrameCallback((f) => { clock.value += Math.min(f.timeSincePreviousFrame ?? 0, 100) / 1000; });
 
   useImperativeHandle(ref, () => ({
     playAdd: (amount) => new Promise<void>((res) => {

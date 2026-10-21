@@ -157,10 +157,10 @@ function Shock({ msT, ms, color, w, delay, rMax }: { msT: SharedValue<number>; m
 const Scene = forwardRef<SceneHandle, SceneProps>(function GalaxyScene({ state, width, height, motion }, ref) {
   const fit = useMemo(() => fitBox(BOX, width, height), [width, height]);
   const n = count(state), pct = Math.min(state.pct, 1);
-  const stateRef = useRef(state); stateRef.current = state;
+  const stateRef = useRef(state); useEffect(() => { stateRef.current = state; }, [state]);
 
   const clock = useSharedValue(0);
-  useFrameCallback((info) => { clock.value = info.timeSinceFirstFrame / 1000; });
+  useFrameCallback((f) => { clock.value += Math.min(f.timeSincePreviousFrame ?? 0, 100) / 1000; });
   const addT = useSharedValue(0), msT = useSharedValue(0);
   const add = useSharedValue<AddInfo>({ on: false, n: 0, k: 0, maxR: 60, seed: 0 });
   const ms = useSharedValue<MsInfo>({ on: false, seed: 0 });
