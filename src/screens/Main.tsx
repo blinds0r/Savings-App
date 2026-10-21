@@ -36,7 +36,8 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
   const p = PALETTES[s.skin], cfg = SKINS[s.skin], ins = useSafeAreaInsets(), { width } = useWindowDimensions();
   const [sheetState, setSheetState] = useState<{ kind: SheetKind; gen: number }>({ kind: null, gen: 0 });
   const sheet = sheetState.kind, sheetGen = sheetState.gen;
-  const setSheet = useCallback((k: SheetKind) => setSheetState((p) => ({ kind: k, gen: k ? p.gen + 1 : p.gen })), []);
+  // a new generation remounts the sheet with fresh fields; re-setting the kind that is already open (a double tap) keeps it
+  const setSheet = useCallback((k: SheetKind) => setSheetState((p) => ({ kind: k, gen: k && k !== p.kind ? p.gen + 1 : p.gen })), []);
   const [editing, setEditing] = useState<Item | null>(null);
   const [toast, setToast] = useState("");
   const [preview, setPreview] = useState<number | null>(null);
@@ -73,13 +74,15 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
   // switching visuals unmounts the old scene: drop anything in flight (its promise may never resolve) and clear any celebration card
   useEffect(() => { const t = setTimeout(() => interrupt(), 0); return () => clearTimeout(t); }, [s.skin, interrupt]);
 
-  const playMilestone = useCallback(async (pct: number) => {
-    const c = ctxRef.current, my = gen.current;
+  const playMilestone = useCallback(async (pct: number, rawAfter?: number) => {
+    const my = gen.current;
     busy.current = true;
     if (motion) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     try { await sceneRef.current?.playMilestone(pct); } catch {}
     if (my !== gen.current) return;
     busy.current = false;
+    // the ref is not refreshed until React has applied the setPending/setPreview from the add, so the caller passes the pile it knows; the ref alone would put the "to go" line off by the amount just added
+    const c0 = ctxRef.current, raw = rawAfter ?? c0.raw, c = { ...c0, raw, t: Math.min(raw, c0.goal) };
     const goalSheetNext = pct >= 100 && s.mode === "target" && preview == null && s.ackGoal !== c.goal;
     if (goalSheetNext) return;
     const MS = msAmounts(c.goal), idx = MS.findIndex((m) => Math.abs(m - (pct / 100) * c.goal) < 0.01);
@@ -95,7 +98,7 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
    * scene animates on the old state and the milestone check sees the true before/after. Queued adds stay held back too. */
   const playAdd = useCallback(async (amount: number, what: string) => {
     if (busy.current) { queue.current.push({ amount, what }); return; }
-    const my = gen.current, before = ctxRef.current.pct, after = pctOf(ctxRef.current.raw + amount, ctxRef.current.goal);
+    const my = gen.current, rawAfter = r2(ctxRef.current.raw + amount), before = ctxRef.current.pct, after = pctOf(rawAfter, ctxRef.current.goal);
     busy.current = true;
     if (motion) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     try { await sceneRef.current?.playAdd(amount); } catch {}
@@ -104,7 +107,7 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
     busy.current = false;
     showToast(`${cfg.toast}: ${what} +${fmt(amount)}`);
     const cr = crossed(before, after);
-    if (cr.length && s.nudges.milestones) await playMilestone(cr[cr.length - 1]);
+    if (cr.length && s.nudges.milestones) await playMilestone(cr[cr.length - 1], rawAfter);
     if (my !== gen.current) return;
     const q = queue.current.shift();
     if (q) setTimeout(() => playAddRef.current(q.amount, q.what), 50); else setSettled((n) => n + 1);
@@ -200,7 +203,7 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
             </View>
           ) : null}
 
-          <Row style={{ gap: 10 }}>{stats.map(([k, v]) => <View key={k} style={[st.stat, { backgroundColor: p.surface }]}><T kind="eyebrow" style={{ fontSize: 11 }}>{k}</T><T style={{ fontFamily: FONT.displayMed, fontSize: 22, fontVariant: ["tabular-nums"] }}>{v}</T></View>)}</Row>
+          <Row style={{ gap: 10 }}>{stats.map(([k, v]) => <View key={k} style={[st.stat, { backgroundColor: p.surface }]}><T kind="eyebrow" style={{ fontSize: 11 }}>{k}</T><T numberOfLines={1} style={{ fontFamily: FONT.displayMed, fontSize: v.length > 8 ? 16 : v.length > 6 ? 19 : 22, fontVariant: ["tabular-nums"] }}>{v}</T></View>)}</Row>
           {banner ? <View style={[st.banner, { backgroundColor: p.surface2, borderColor: p.line }]}><Glyph kind="clock" color={p.accent} /><T kind="note" style={{ flex: 1, fontSize: 13 }}>{banner}</T></View> : null}
 
           <View style={{ gap: 10 }}>
@@ -235,7 +238,7 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
         <SkipSheet key={`log-${sheetGen}`} open={sheet === "log"} onClose={closeSheet} title="What did you skip?" btn={cfg.btn} ctx={ctx} skin={s.skin} pending={pending} onSubmit={logSkip} />
         <SkipSheet key={`edit-${sheetGen}`} open={sheet === "edit"} onClose={closeSheet} title="Edit this skip" btn="Save" item={editing} ctx={ctx} skin={s.skin} pending={0} onSubmit={saveEdit} />
         <SettingsSheet key={`set-${sheetGen}`} open={sheet === "settings"} onClose={closeSheet} s={s} onSave={(patch) => { setSheet(null); store.saveSettings(patch); showToast("Saved"); }} onRedo={() => { setSheet(null); store.saveSettings({ onboarded: false }); }} />
-        <ShareSheet open={sheet === "share"} onClose={closeSheet} ctx={ctx} s={s} skin={s.skin} count={items.length} pct={sharePct} />
+        <ShareSheet open={sheet === "share"} onClose={closeSheet} ctx={ctx} s={s} skin={s.skin} count={monthly ? items.filter((i) => monthKey(i.at) === nowKey(now)).length : items.length} pct={sharePct} />
         <GoalSheet key={`goal-${sheetGen}`} open={sheet === "goal"} onClose={closeSheet} ctx={goalDemo ? { ...ctx, total: ctx.goal + 85 } : ctx} s={s} skin={s.skin} demo={goalDemo}
           onKeep={() => { setSheet(null); store.saveSettings({ ackGoal: ctx.goal }); }}
           onNewTarget={(v) => { setSheet(null); store.saveSettings({ target: v, ackGoal: 0 }); }}

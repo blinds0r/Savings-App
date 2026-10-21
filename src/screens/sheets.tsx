@@ -62,7 +62,7 @@ export function ShareSheet({ open, onClose, ctx, s, skin, count, pct }: { open: 
 /* ---------- goal reached ---------- */
 function Card2({ title, sub, onPress, testID }: { title: string; sub: string; onPress: () => void; testID: string }) {
   const p = useTheme();
-  return <Btn kind="ghost" testID={testID} title="" onPress={onPress} style={{ alignItems: "flex-start", paddingVertical: 12, borderRadius: 18, borderWidth: 2, backgroundColor: p.surface }} icon={<View style={{ gap: 4 }}><T kind="semi" style={{ fontSize: 16 }}>{title}</T><T kind="note" style={{ fontSize: 13 }}>{sub}</T></View>} />;
+  return <Btn kind="ghost" testID={testID} title="" onPress={onPress} style={{ alignItems: "flex-start", paddingVertical: 12, borderRadius: 18, borderWidth: 2, backgroundColor: p.surface }} icon={<View style={{ gap: 4, flex: 1 }}><T kind="semi" style={{ fontSize: 16 }}>{title}</T><T kind="note" style={{ fontSize: 13 }}>{sub}</T></View>} />;
 }
 export function GoalSheet({ open, onClose, ctx, s, skin, demo, onKeep, onNewTarget, onMonthly, onShare }: { open: boolean; onClose: () => void; ctx: Ctx; s: Settings; skin: SkinKey; demo?: boolean; onKeep: () => void; onNewTarget: (v: number) => void; onMonthly: (v: number) => void; onShare: () => void }) {
   const p = useTheme(); const [more, setMore] = useState<"new" | "monthly" | null>(null); const [v, setV] = useState(""); const [err, setErr] = useState("");
@@ -77,7 +77,7 @@ export function GoalSheet({ open, onClose, ctx, s, skin, demo, onKeep, onNewTarg
         <Card>
           <Field label={more === "new" ? "New target" : "Goal each month"}><BigAmount value={v} onChange={setV} /></Field>
           {err ? <T kind="note" style={{ color: p.accent }}>{err}</T> : null}
-          <Btn big title={more === "new" ? "Set it" : "Switch"} onPress={() => { const n = parseAmt(v); if (demo) return onClose(); if (more === "new") { if (n > ctx.total) onNewTarget(n); else setErr(`Pick something above ${fmt(ctx.total)}.`); } else if (n > 0) onMonthly(n); else setErr("Enter an amount above $0."); }} />
+          <Btn big title={more === "new" ? "Set it" : "Switch"} onPress={() => { const n = parseAmt(v); if (demo) return onClose(); const prob = amtProblem(v, n); if (prob) return setErr(prob); if (more === "new") { if (n > ctx.total) onNewTarget(n); else setErr(`Pick something above ${fmt(ctx.total)}.`); } else if (n > 0) onMonthly(n); else setErr("Enter an amount above $0."); }} />
         </Card>
       ) : null}
       <Btn kind="ghost" big title="Share this first" onPress={onShare} />
@@ -88,16 +88,18 @@ export function GoalSheet({ open, onClose, ctx, s, skin, demo, onKeep, onNewTarg
 /* ---------- settings ---------- */
 export function SettingsSheet({ open, onClose, s, onSave, onRedo }: { open: boolean; onClose: () => void; s: Settings; onSave: (patch: Partial<Settings>) => void; onRedo: () => void }) {
   const [mode, setMode] = useState<Mode>(s.mode); const [amt, setAmt] = useState(String(s.mode === "monthly" ? s.monthly : s.target)); const [name, setName] = useState(s.goalName); const [skin, setSkin] = useState<SkinKey>(s.skin); const [nud, setNud] = useState(s.nudges); const [calm, setCalm] = useState(s.motion === "calm");
+  const [err, setErr] = useState("");
   const p = useTheme();
   return (
     <Sheet open={open} onClose={onClose} label="Settings">
       <T kind="display" style={{ fontSize: 26 }}>Settings</T>
       <T kind="eyebrow">Goal</T>
       <Card style={{ paddingVertical: 4, gap: 0 }}>
-        <SRow label="Kind" right={<Seg options={[{ v: "target", label: "Target" }, { v: "monthly", label: "Monthly" }]} value={mode} onChange={(v) => { setMode(v); setAmt(String(v === "monthly" ? s.monthly : s.target)); }} />} />
-        <SRow label={mode === "monthly" ? "Goal each month" : "Target"} right={<Input value={amt} onChangeText={setAmt} keyboardType="decimal-pad" style={{ width: 140 }} />} />
+        <SRow label="Kind" right={<Seg options={[{ v: "target", label: "Target" }, { v: "monthly", label: "Monthly" }]} value={mode} onChange={(v) => { setMode(v); setAmt(String(v === "monthly" ? s.monthly : s.target)); setErr(""); }} />} />
+        <SRow label={mode === "monthly" ? "Goal each month" : "Target"} right={<Input value={amt} onChangeText={(v) => { setAmt(v); setErr(""); }} keyboardType="decimal-pad" inputMode="decimal" style={{ width: 140 }} />} />
         <SRow label="Name" sub="Optional" last right={<Input value={name} onChangeText={setName} maxLength={30} placeholder="Trip fund" style={{ width: 160 }} />} />
       </Card>
+      {err ? <T kind="note" style={{ color: p.accent }}>{err}</T> : null}
       <T kind="eyebrow">Visual</T>
       <Row style={{ flexWrap: "wrap" }}>{SKIN_KEYS.map((k) => <Chip key={k} title={SKINS[k].name} on={skin === k} onPress={() => setSkin(k)} />)}</Row>
       <T kind="eyebrow">Notifications</T>
@@ -110,7 +112,7 @@ export function SettingsSheet({ open, onClose, s, onSave, onRedo }: { open: bool
       </Card>
       <T kind="eyebrow">Motion</T>
       <Card style={{ paddingVertical: 4, gap: 0 }}><SRow label="Calmer motion" sub="Skip the animations and just update the picture" last right={<Switch label="Calmer motion" on={calm} onChange={setCalm} />} /></Card>
-      <Btn big title="Save" testID="sSave" onPress={() => { const v = parseAmt(amt); const ok = v > 0 && v <= MAX_AMT; const patch: Partial<Settings> = { mode, skin, goalName: name.trim(), motion: calm ? "calm" : "full", nudges: nud }; if (mode === "monthly") { if (ok) patch.monthly = v; } else if (ok) { patch.target = v; if (v !== s.target) patch.ackGoal = 0; } onSave(patch); }} />
+      <Btn big title="Save" testID="sSave" onPress={() => { const v = parseAmt(amt); if (!(v > 0) || amtProblem(amt, v)) { setErr(amtProblem(amt, v) || "Enter an amount above $0."); return; } const patch: Partial<Settings> = { mode, skin, goalName: name.trim(), motion: calm ? "calm" : "full", nudges: nud }; if (mode === "monthly") patch.monthly = v; else { patch.target = v; if (v !== s.target) patch.ackGoal = 0; } onSave(patch); }} />
       <Btn kind="ghost" big title="Start onboarding again" onPress={onRedo} />
       <T kind="note" style={{ textAlign: "center" }}>Skipped It · test build</T>
     </Sheet>

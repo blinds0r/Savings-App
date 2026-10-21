@@ -36,7 +36,7 @@ export function IconBtn({ onPress, label, children, testID }: { onPress: () => v
 export function Chip({ title, on, onPress, swatch, testID }: { title: string; on?: boolean; onPress: () => void; swatch?: [string, string]; testID?: string }) {
   const p = useTheme();
   return (
-    <Pressable testID={testID} accessibilityRole="button" accessibilityState={{ selected: !!on }} onPress={onPress} style={[s.chip, { borderColor: on ? p.fg : p.line, backgroundColor: on ? p.fg : p.surface2 }, swatch && { paddingLeft: 6 }]}>
+    <Pressable testID={testID} accessibilityRole="button" accessibilityState={{ selected: !!on }} aria-selected={!!on} onPress={onPress} style={[s.chip, { borderColor: on ? p.fg : p.line, backgroundColor: on ? p.fg : p.surface2 }, swatch && { paddingLeft: 6 }]}>
       {swatch && <View style={[s.swatch, { backgroundColor: swatch[0] }]}><View style={[s.swatchDot, { backgroundColor: swatch[1] }]} /></View>}
       <Text style={{ fontFamily: FONT.bodySemi, fontSize: 14, color: on ? p.bg : p.fg }}>{title}</Text>
     </Pressable>
@@ -46,14 +46,14 @@ export function Seg<Tv extends string | number>({ options, value, onChange }: { 
   const p = useTheme();
   return (
     <View style={[s.seg, { borderColor: p.line }]}>
-      {options.map((o) => <Pressable key={String(o.v)} accessibilityRole="button" accessibilityState={{ selected: o.v === value }} onPress={() => onChange(o.v)} style={[s.segBtn, o.v === value && { backgroundColor: p.fg }]}><Text style={{ fontFamily: FONT.bodyMed, fontSize: 14, color: o.v === value ? p.bg : p.fg }}>{o.label}</Text></Pressable>)}
+      {options.map((o) => <Pressable key={String(o.v)} accessibilityRole="button" accessibilityState={{ selected: o.v === value }} aria-selected={o.v === value} onPress={() => onChange(o.v)} style={[s.segBtn, o.v === value && { backgroundColor: p.fg }]}><Text style={{ fontFamily: FONT.bodyMed, fontSize: 14, color: o.v === value ? p.bg : p.fg }}>{o.label}</Text></Pressable>)}
     </View>
   );
 }
 export function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
   const p = useTheme();
   return (
-    <Pressable accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={label} onPress={() => onChange(!on)} style={s.switchHit}>
+    <Pressable accessibilityRole="switch" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={label} onPress={() => onChange(!on)} style={s.switchHit}>
       <View style={[s.switchTrack, { backgroundColor: on ? p.btnBg : p.line }]}><View style={[s.switchKnob, { transform: [{ translateX: on ? 20 : 0 }], backgroundColor: on && p.dark ? p.bg : "#FFFFFF" }]} /></View>
     </Pressable>
   );
@@ -87,21 +87,24 @@ export function SRow({ label, sub, right, last }: { label: string; sub?: string;
 /* ---------- bottom sheet ---------- */
 export function Sheet({ open, onClose, children, label }: { open: boolean; onClose: () => void; children: React.ReactNode; label: string }) {
   const p = useTheme(); const ins = useSafeAreaInsets(); const { height } = useWindowDimensions();
-  const [y] = useState(() => new Animated.Value(700)); const [closing, setClosing] = useState(false); const [wasOpen, setWasOpen] = useState(false);
+  const [y] = useState(() => new Animated.Value(700));
+  // `shown` stays true while the sheet slides away, so the Modal never unmounts for a frame between open and closing
+  const [shown, setShown] = useState(false);
+  // the scrim only closes once the slide-in has finished, so the second tap of a double tap on the opener does not land on it
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    if (open) { const t = setTimeout(() => setWasOpen(true), 0); Animated.timing(y, { toValue: 0, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(); return () => clearTimeout(t); }
-    if (!wasOpen) return; // never opened: nothing to slide away
-    let live = true; const t = setTimeout(() => { if (live) setClosing(true); }, 0);
-    const done = setTimeout(() => { if (live) setClosing(false); }, 260);
+    if (open) { const t = setTimeout(() => { setShown(true); setReady(false); }, 0); Animated.timing(y, { toValue: 0, duration: 320, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start(({ finished }) => { if (finished) setReady(true); }); return () => clearTimeout(t); }
+    if (!shown) return; // never opened: nothing to slide away
+    const done = setTimeout(() => { setShown(false); setReady(false); }, 260);
     Animated.timing(y, { toValue: 700, duration: 220, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start();
-    return () => { live = false; clearTimeout(t); clearTimeout(done); };
-  }, [open, y, wasOpen]);
-  if (!open && !closing) return null;
+    return () => clearTimeout(done);
+  }, [open, y, shown]);
+  if (!open && !shown) return null;
   return (
     <Modal transparent visible animationType="none" onRequestClose={onClose} statusBarTranslucent>
-      <Pressable accessibilityLabel="Close" onPress={onClose} style={s.scrim} />
+      <Pressable accessibilityLabel="Close" disabled={!open || !ready} onPress={onClose} style={s.scrim} />
       <KeyboardAvoidingView behavior="padding" style={{ justifyContent: "flex-end", flex: 1 }} pointerEvents="box-none">
-        <Animated.View accessibilityViewIsModal accessibilityLabel={label} style={[s.sheet, { backgroundColor: p.bg, paddingBottom: ins.bottom + 20, maxHeight: height * 0.9, transform: [{ translateY: y }] }]}>
+        <Animated.View accessibilityViewIsModal accessibilityLabel={label} pointerEvents={open ? "auto" : "none"} style={[s.sheet, { backgroundColor: p.bg, paddingBottom: ins.bottom + 20, maxHeight: height * 0.9, transform: [{ translateY: y }] }]}>
           <View style={[s.grab, { backgroundColor: p.line }]} />
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 14, paddingHorizontal: 16 }}>{children}</ScrollView>
         </Animated.View>

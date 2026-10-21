@@ -39,7 +39,7 @@ export function Onboarding({ initial, onDone }: { initial: Settings; onDone: (s:
             </View>
             <View style={{ flexDirection: "row", gap: 10 }}>
               {([["target", "Toward a target", "One pile that grows until you reach it."], ["monthly", "A monthly goal", "A fresh pile every month. Beat it and the extra piles up beside it."]] as const).map(([v, t, d]) => (
-                <Pressable key={v} accessibilityRole="button" accessibilityState={{ selected: mode === v }} onPress={() => setMode(v)} style={[st.modeCard, { backgroundColor: p.surface, borderColor: mode === v ? p.fg : p.line }]}>
+                <Pressable key={v} accessibilityRole="button" accessibilityState={{ selected: mode === v }} onPress={() => { setMode(v); setMsg(""); }} style={[st.modeCard, { backgroundColor: p.surface, borderColor: mode === v ? p.fg : p.line }]}>
                   <T kind="semi" style={{ fontSize: 16 }}>{t}</T><T kind="note" style={{ fontSize: 13 }}>{d}</T>
                 </Pressable>
               ))}
