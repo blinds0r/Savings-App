@@ -45,8 +45,8 @@ const PEEK_DUR = 1.7; // peek(hold 1100) = hold + 600 ms
 /* ---------- add timeline (ms) ---------- */
 const T_CROUCH = 0, T_SPRING = 200, T_FLY = 290, FLY_D = 1150, T_WAIT = T_FLY + FLY_D, T_BACK = T_WAIT + 260, BACK_D = 1250, T_LAND = T_BACK + BACK_D, T_TILT = T_LAND + 260, T_DROP = T_TILT + 220;
 const DROP_GAP = 150, DROP_FALL = 460;
-const dropEnd = (k: number) => T_DROP + (k - 1) * DROP_GAP + DROP_FALL;
-const addDurFor = (k: number) => dropEnd(k) + 260;
+function dropEnd(k: number) { "worklet"; return T_DROP + (k - 1) * DROP_GAP + DROP_FALL; }
+function addDurFor(k: number) { "worklet"; return dropEnd(k) + 260; }
 // flight paths and wing plans (SK prototype)
 const PA = [0, 0, 18, -70, 130, -170, 270, -300], PB = [250, -170, 160, -230, 70, -40, 0, 0];
 const PLAN_A = [0, 420, 1, 135, 40, 420, 600, 0, 0, -24, 600, 860, 1, 165, 30, 860, 2000, 0, 0, -20];

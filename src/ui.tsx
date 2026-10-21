@@ -100,7 +100,7 @@ export function Sheet({ open, onClose, children, label }: { open: boolean; onClo
   return (
     <Modal transparent visible animationType="none" onRequestClose={onClose} statusBarTranslucent>
       <Pressable accessibilityLabel="Close" onPress={onClose} style={s.scrim} />
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ justifyContent: "flex-end", flex: 1 }} pointerEvents="box-none">
+      <KeyboardAvoidingView behavior="padding" style={{ justifyContent: "flex-end", flex: 1 }} pointerEvents="box-none">
         <Animated.View accessibilityViewIsModal accessibilityLabel={label} style={[s.sheet, { backgroundColor: p.bg, paddingBottom: ins.bottom + 20, maxHeight: height * 0.9, transform: [{ translateY: y }] }]}>
           <View style={[s.grab, { backgroundColor: p.line }]} />
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 14, paddingHorizontal: 16 }}>{children}</ScrollView>

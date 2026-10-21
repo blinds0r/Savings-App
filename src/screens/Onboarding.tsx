@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, ScrollView, View, StyleSheet } from "react-native";
+import { KeyboardAvoidingView, Pressable, ScrollView, View, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SKINS, SKIN_KEYS } from "../copy";
 import { amtProblem, fmt, parseAmt } from "../model/logic";
@@ -24,7 +24,8 @@ export function Onboarding({ initial, onDone }: { initial: Settings; onDone: (s:
   const previews = useMemo(() => ({ pct: 0.42, surplus: 0, goal }), [goal]);
   return (
     <ThemeCtx.Provider value={p}>
-      <ScrollView style={{ flex: 1, backgroundColor: p.bg }} contentContainerStyle={{ padding: 16, paddingTop: ins.top + 16, paddingBottom: ins.bottom + 24, gap: 18 }} keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: p.bg }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingTop: ins.top + 16, paddingBottom: ins.bottom + 24, gap: 18 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
         <Row style={{ justifyContent: "space-between" }}>
           <T kind="display" style={{ fontSize: 17 }}>Skipped It</T>
           <View accessibilityLabel={`Step ${step} of 2`} style={{ flexDirection: "row", gap: 6 }}>{[1, 2].map((i) => <View key={i} style={{ width: 28, height: 4, borderRadius: 2, backgroundColor: i <= step ? p.fg : p.line }} />)}</View>
@@ -73,6 +74,7 @@ export function Onboarding({ initial, onDone }: { initial: Settings; onDone: (s:
           </>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
     </ThemeCtx.Provider>
   );
 }
