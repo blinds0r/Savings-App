@@ -1,0 +1,24 @@
+name: Build Android test app
+# Builds an installable Android APK in Expo's cloud. Needs one repository secret: EXPO_TOKEN (from expo.dev → Account settings → Access tokens).
+on:
+  workflow_dispatch:
+    inputs:
+      platform: { description: "android, ios or all", default: "android", required: true }
+      profile: { description: "preview (install file) or testflight", default: "preview", required: true }
+  push:
+    branches: [main]
+    paths-ignore: ["**.md"]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: expo/expo-github-action@v8
+        with: { eas-version: latest, token: ${{ secrets.EXPO_TOKEN }} }
+      - run: npm ci
+      - run: npx tsc --noEmit -p .
+      - run: npm test -- --ci
+      - name: Build
+        run: eas build --platform ${{ github.event.inputs.platform || 'android' }} --profile ${{ github.event.inputs.profile || 'preview' }} --non-interactive --no-wait
