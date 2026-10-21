@@ -1,13 +1,10 @@
 name: Build Android test app
-# Builds an installable Android APK in Expo's cloud. Needs one repository secret: EXPO_TOKEN (from expo.dev → Account settings → Access tokens).
+# Manual: Actions tab → Build Android test app → Run workflow. Needs one repository secret: EXPO_TOKEN (expo.dev → User settings → Advanced → Access tokens).
 on:
   workflow_dispatch:
     inputs:
       platform: { description: "android, ios or all", default: "android", required: true }
       profile: { description: "preview (install file) or testflight", default: "preview", required: true }
-  push:
-    branches: [main]
-    paths-ignore: ["**.md"]
 jobs:
   build:
     runs-on: ubuntu-latest
