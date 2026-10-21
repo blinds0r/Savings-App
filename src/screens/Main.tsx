@@ -18,12 +18,13 @@ import { FONT, PALETTES, SCENES } from "../theme";
 import { Btn, Chip, IconBtn, Row, T, ThemeCtx, Toast, useTheme } from "../ui";
 import { VisualSheet } from "./VisualGrid";
 import { Ladder } from "./Ladder";
+import { TopTiles, YearSheet } from "./YearSheet";
 import { VISUALS } from "../visuals";
 import type { SceneHandle } from "../visuals/contract";
 import { Onboarding } from "./Onboarding";
 import { GoalSheet, PreviewSheet, SettingsSheet, ShareSheet, SkipSheet } from "./sheets";
 
-type SheetKind = null | "log" | "edit" | "settings" | "share" | "goal" | "preview" | "visual";
+type SheetKind = null | "log" | "edit" | "settings" | "share" | "goal" | "preview" | "visual" | "year";
 
 export function Main() {
   const [fontsLoaded] = useFonts({ BricolageGrotesque_700Bold, BricolageGrotesque_800ExtraBold, Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold });
@@ -136,6 +137,10 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
     : s.skin === "firefly" || s.skin === "tree" ? [[s.skin === "tree" ? "Leaves" : "Caught", `${countOf(ctx.pct, 300)} / 300`], ["Skips", String(items.length)], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]]
     : [[s.skin === "crow" ? "Finds" : "Skips", String(items.length)], ["Average", avg], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]];
   if (s.nudges.streak) stats[1] = ["Weekly run", sk.n ? `${sk.n} wk${sk.n === 1 ? "" : "s"}` : "–"];
+  // monthly mode: three slim tiles above the visual instead of the stats row (weekly run or skips this month, to go, all time)
+  const tileFirst: [string, string] = s.nudges.streak ? stats[1] : ["Skips", String(items.filter((i) => monthKey(i.at) === nowKey(now)).length)];
+  const tileSecond: [string, string] = ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))];
+  const allTime = r2(items.reduce((a, i) => a + (Number(i.amount) || 0), 0));
   const strip = monthly ? monthsStrip(items, ctx.goal, ctx.raw) : null;
   const amountText = s.skin === "summit" ? `${int(ctx.pct * 3000)} m` : fmt(ctx.raw);
   const scene = SCENES[s.skin] || null, page = scene && V.backgrounds[scene] ? V.backgrounds[scene].page : p.bg;
@@ -154,14 +159,17 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
             </Row>
           </Row>
           <View style={{ gap: 6 }}>
-            <Row style={{ justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap" }}>
-              <T kind="display" testID="amount" style={{ fontSize: amountText.length > 11 ? 36 : amountText.length > 9 ? 44 : 60, lineHeight: amountText.length > 9 ? 48 : 62, fontVariant: ["tabular-nums"] }}>{amountText}</T>
-              {preview != null ? <Pill text="Preview" /> : cfg.chip ? <Pill text={cfg.chip(ctx.pct)} /> : null}
+            <Row style={{ justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <T kind="display" testID="amount" numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: amountText.length > 11 ? 36 : amountText.length > 9 ? 44 : 60, lineHeight: amountText.length > 9 ? 48 : 62, fontVariant: ["tabular-nums"] }}>{amountText}</T>
+              <Chip testID="skinBtn" title="Change Scene" on={false} swatch={SKINS[s.skin].swatch} onPress={() => setSheet("visual")} />
             </Row>
+            {preview != null || cfg.chip ? <Row>{preview != null ? <Pill text="Preview" /> : <Pill text={cfg.chip ? cfg.chip(ctx.pct) : ""} />}</Row> : null}
             {ctx.surplus > 0 ? <T kind="muted" style={{ fontSize: 16 }}>{monthly ? "This month's goal beaten" : "Target reached"} · <T kind="bold" style={{ color: p.accent, fontSize: 16 }}>{cfg.overText(ctx.surplus)}</T></T>
               : <T kind="muted" style={{ fontSize: 16 }}>{cfg.sub(ctx)}{monthly ? ` · resets ${nextMonthLabel()}` : ""}</T>}
             {!monthly && ctx.banked > 0 ? <T kind="note" testID="banked">Plus {fmt(ctx.banked)} banked from {s.bankedGoals === 1 ? "a goal you already hit" : `${s.bankedGoals} goals you already hit`}</T> : null}
           </View>
+
+          {monthly ? <TopTiles skin={s.skin} first={tileFirst} second={tileSecond} total={allTime} onTotal={() => { if (busy.current) interrupt(); setSheet("year"); }} /> : null}
 
           {/* stage: the scene band runs edge to edge behind the visual */}
           <View style={{ marginHorizontal: -16, backgroundColor: page, paddingVertical: scene ? 0 : 0 }}>
@@ -177,9 +185,6 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
               </View>
             ) : null}
           </View>
-          <Row style={{ justifyContent: "flex-end", marginTop: -4 }}>
-            <Chip testID="skinBtn" title={`${SKINS[s.skin].name} · Change visual`} on={false} swatch={SKINS[s.skin].swatch} onPress={() => setSheet("visual")} />
-          </Row>
 
           {strip ? (
             <View style={[st.card, { backgroundColor: p.surface }]}>
@@ -207,7 +212,7 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
             </View>
           ) : null}
 
-          <Row style={{ gap: 10 }}>{stats.map(([k, v]) => <View key={k} style={[st.stat, { backgroundColor: p.surface }]}><T kind="eyebrow" style={{ fontSize: 11 }}>{k}</T><T numberOfLines={1} style={{ fontFamily: FONT.displayMed, fontSize: v.length > 8 ? 16 : v.length > 6 ? 19 : 22, fontVariant: ["tabular-nums"] }}>{v}</T></View>)}</Row>
+          {monthly ? null : <Row style={{ gap: 10 }}>{stats.map(([k, v]) => <View key={k} style={[st.stat, { backgroundColor: p.surface }]}><T kind="eyebrow" style={{ fontSize: 11 }}>{k}</T><T numberOfLines={1} style={{ fontFamily: FONT.displayMed, fontSize: v.length > 8 ? 16 : v.length > 6 ? 19 : 22, fontVariant: ["tabular-nums"] }}>{v}</T></View>)}</Row>}
           {banner ? <View style={[st.banner, { backgroundColor: p.surface2, borderColor: p.line }]}><Glyph kind="clock" color={p.accent} /><T kind="note" style={{ flex: 1, fontSize: 13 }}>{banner}</T></View> : null}
 
           <View style={{ gap: 10 }}>
@@ -243,6 +248,7 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
 
         <SkipSheet key={`log-${sheetGen}`} open={sheet === "log"} onClose={closeSheet} title="What did you skip?" btn={cfg.btn} ctx={ctx} skin={s.skin} pending={pending} onSubmit={logSkip} />
         <SkipSheet key={`edit-${sheetGen}`} open={sheet === "edit"} onClose={closeSheet} title="Edit this skip" btn="Save" item={editing} ctx={ctx} skin={s.skin} pending={0} onSubmit={saveEdit} />
+        <YearSheet open={sheet === "year"} onClose={closeSheet} items={items} s={s} onShare={() => { setSharePct(null); setSheet("share"); }} />
         <VisualSheet open={sheet === "visual"} onClose={closeSheet} skin={s.skin} goal={ctx.goal} pct={ctx.pct} onPick={(k) => { if (busy.current) interrupt(); store.saveSettings({ skin: k }); }} />
         <SettingsSheet key={`set-${sheetGen}`} open={sheet === "settings"} onClose={closeSheet} s={s} onSave={(patch) => { setSheet(null); store.saveSettings(patch); showToast("Saved"); }} onRedo={() => { setSheet(null); store.saveSettings({ onboarded: false }); }} />
         <ShareSheet open={sheet === "share"} onClose={closeSheet} ctx={ctx} s={s} skin={s.skin} count={monthly ? items.filter((i) => monthKey(i.at) === nowKey(now)).length : items.length} pct={sharePct} />

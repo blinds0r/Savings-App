@@ -47,7 +47,7 @@ srv.listen(0, async () => {
   await p.locator('[aria-label="Settings"] >> text=Money tree').click(); await p.click(tid('sSave')); await p.waitForTimeout(1200);
   // home: Change visual button -> tile picker -> crow, then back to tree
   await p.click(tid('skinBtn')); await p.waitForTimeout(700); await p.screenshot({ path: `${out}/07b-visual-sheet.png` }); await p.click(tid('vcard-crow')); await p.waitForTimeout(1200);
-  log('after picker: ' + (await p.textContent('body')).includes("Crow's hoard · Change visual"));
+  log('after picker: ' + (await p.textContent('body')).includes('Treasures to unlock'));
   await p.click(tid('skinBtn')); await p.waitForTimeout(700); await p.click(tid('vcard-tree')); await p.waitForTimeout(1200);
   await p.screenshot({ path: `${out}/09-tree.png` });
   // reload: persisted?

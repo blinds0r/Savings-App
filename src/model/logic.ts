@@ -100,3 +100,37 @@ export function monthsStrip(items: Item[], goal: number, raw: number, now = new 
 }
 
 export const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+/* ---------- your year ---------- */
+/** Everything the "Your year" screen shows, from the raw ledger. `goal` is the monthly goal in monthly mode (months
+ * that reach it are marked beaten), or null in target mode. Months run from the first skip's month to now. */
+export function yearSummary(items: Item[], goal: number | null, now = new Date()) {
+  const sorted = [...items].sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+  const total = r2(items.reduce((a, i) => a + (Number(i.amount) || 0), 0));
+  if (!sorted.length) return { total: 0, count: 0, since: null as string | null, months: [] as { key: string; label: string; value: number; beaten: boolean; current: boolean }[], top: [] as Item[], weekday: null as { name: string; n: number } | null, typical: 0, curve: [] as { t: number; v: number }[] };
+  const first = dateOf(sorted[0].at), start = new Date(first.getFullYear(), first.getMonth(), 1);
+  const tot: Record<string, number> = {};
+  sorted.forEach((i) => { const k = monthKey(i.at); tot[k] = r2((tot[k] || 0) + (Number(i.amount) || 0)); });
+  const months: { key: string; label: string; value: number; beaten: boolean; current: boolean }[] = [];
+  const cur = nowKey(now);
+  for (let d = new Date(start); keyOf(d) <= cur; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) {
+    const k = keyOf(d), v = tot[k] || 0;
+    months.push({ key: k, label: monthName(k), value: v, beaten: goal != null && v >= goal, current: k === cur });
+    if (months.length > 240) break;
+  }
+  const top = [...items].sort((a, b) => b.amount - a.amount).slice(0, 3);
+  const byDay = [0, 0, 0, 0, 0, 0, 0];
+  items.forEach((i) => { byDay[dateOf(i.at).getDay()]++; });
+  const maxN = Math.max(...byDay), di = byDay.indexOf(maxN);
+  const names = ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"];
+  const weekday = items.length >= 5 && byDay.filter((n) => n === maxN).length === 1 ? { name: names[di], n: maxN } : null;
+  const amts = items.map((i) => i.amount).sort((a, b) => a - b), mid = Math.floor(amts.length / 2);
+  const typical = r2(amts.length % 2 ? amts[mid] : (amts[mid - 1] + amts[mid]) / 2);
+  // running total over time, as fractions of the span from the first month's start to now
+  const t0 = start.getTime(), span = Math.max(1, now.getTime() - t0);
+  let run = 0;
+  const curve = [{ t: 0, v: 0 }];
+  sorted.forEach((i) => { const t = Math.min(1, Math.max(0, (dateOf(i.at).getTime() - t0) / span)); curve.push({ t, v: run }); run = r2(run + (Number(i.amount) || 0)); curve.push({ t, v: run }); });
+  curve.push({ t: 1, v: run });
+  return { total, count: items.length, since: monthName(keyOf(start), true), months, top, weekday, typical, curve };
+}
