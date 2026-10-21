@@ -6,7 +6,7 @@ import { amtProblem, fmt, parseAmt } from "../model/logic";
 import type { Mode, Settings, SkinKey } from "../model/types";
 import { PALETTES } from "../theme";
 import { BigAmount, Btn, Card, Chip, Field, Input, Row, T, ThemeCtx } from "../ui";
-import { VISUALS } from "../visuals";
+import { VisualGrid } from "./VisualGrid";
 
 export function Onboarding({ initial, onDone }: { initial: Settings; onDone: (s: Partial<Settings>) => void }) {
   const ins = useSafeAreaInsets();
@@ -21,7 +21,6 @@ export function Onboarding({ initial, onDone }: { initial: Settings; onDone: (s:
   const amt = parseAmt(amtStr), presets = m ? [200, 400, 800] : [1000, 3000, 5000];
   const p = PALETTES[step === 2 ? skin : "glass"];
   const goal = amt > 0 ? amt : 3000;
-  const previews = useMemo(() => ({ pct: 0.42, surplus: 0, goal }), [goal]);
   return (
     <ThemeCtx.Provider value={p}>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1, backgroundColor: p.bg }}>
@@ -61,15 +60,9 @@ export function Onboarding({ initial, onDone }: { initial: Settings; onDone: (s:
             <View style={{ gap: 8 }}>
               <T kind="eyebrow">Step 2 · Your visual</T>
               <T kind="display" style={{ fontSize: 34, lineHeight: 36 }}>Choose how your savings look</T>
-              <T kind="muted">Each skip adds to the picture. Change it anytime in Settings.</T>
+              <T kind="muted">Each skip adds to the picture. Change it anytime from the home screen.</T>
             </View>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-              {SKIN_KEYS.map((k) => { const V = VISUALS[k], on = skin === k; return (
-                <Pressable key={k} testID={`vcard-${k}`} accessibilityRole="button" accessibilityState={{ selected: on }} onPress={() => setSkin(k)} style={[st.vcard, { backgroundColor: p.surface, borderColor: on ? p.accent : p.line, width: "48%" }]}>
-                  <View style={{ borderRadius: 10, overflow: "hidden", backgroundColor: V.plain, height: 110 }}><V.Scene state={previews} width={160} height={110} motion={false} background={null} /></View>
-                  <T kind="semi" style={{ fontSize: 14 }}>{SKINS[k].name}</T><T kind="note">{SKINS[k].desc(goal)}</T>
-                </Pressable>); })}
-            </View>
+            <VisualGrid skin={skin} goal={goal} onPick={setSkin} />
             <Row><Btn kind="ghost" title="Back" onPress={() => setStep(1)} /><Btn big title="Start saving" testID="onbDone" style={{ flex: 1 }} onPress={() => onDone({ onboarded: true, mode, target: m ? initial.target : amt, monthly: m ? amt : initial.monthly, goalName: name.trim(), skin, ackGoal: 0 })} /></Row>
           </>
         )}
@@ -80,5 +73,4 @@ export function Onboarding({ initial, onDone }: { initial: Settings; onDone: (s:
 }
 const st = StyleSheet.create({
   modeCard: { flex: 1, padding: 14, borderRadius: 18, borderWidth: 2, gap: 6 },
-  vcard: { padding: 8, borderRadius: 16, borderWidth: 2, gap: 6 },
 });

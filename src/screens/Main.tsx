@@ -16,12 +16,13 @@ import type { Item, Settings, VisualState } from "../model/types";
 import { reschedule, setupNotifications } from "../notify";
 import { FONT, PALETTES, SCENES } from "../theme";
 import { Btn, Chip, IconBtn, Row, T, ThemeCtx, Toast, useTheme } from "../ui";
+import { VisualSheet } from "./VisualGrid";
 import { VISUALS } from "../visuals";
 import type { SceneHandle } from "../visuals/contract";
 import { Onboarding } from "./Onboarding";
 import { GoalSheet, PreviewSheet, SettingsSheet, ShareSheet, SkipSheet } from "./sheets";
 
-type SheetKind = null | "log" | "edit" | "settings" | "share" | "goal" | "preview";
+type SheetKind = null | "log" | "edit" | "settings" | "share" | "goal" | "preview" | "visual";
 
 export function Main() {
   const [fontsLoaded] = useFonts({ BricolageGrotesque_700Bold, BricolageGrotesque_800ExtraBold, Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold });
@@ -151,9 +152,6 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
               <IconBtn label="Settings" testID="setBtn" onPress={() => setSheet("settings")}><Glyph kind="sliders" color={p.fg} /></IconBtn>
             </Row>
           </Row>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 2 }} style={{ marginHorizontal: -2 }}>
-            {SKIN_KEYS.map((k) => <Chip key={k} testID={`skin-${k}`} title={SKINS[k].name} on={s.skin === k} swatch={SKINS[k].swatch} onPress={() => { if (busy.current) interrupt(); store.saveSettings({ skin: k }); }} />)}
-          </ScrollView>
           <View style={{ gap: 6 }}>
             <Row style={{ justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap" }}>
               <T kind="display" testID="amount" style={{ fontSize: amountText.length > 11 ? 36 : amountText.length > 9 ? 44 : 60, lineHeight: amountText.length > 9 ? 48 : 62, fontVariant: ["tabular-nums"] }}>{amountText}</T>
@@ -176,6 +174,9 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
               </View>
             ) : null}
           </View>
+          <Row style={{ justifyContent: "flex-end", marginTop: -4 }}>
+            <Chip testID="skinBtn" title={`${SKINS[s.skin].name} · Change visual`} on={false} swatch={SKINS[s.skin].swatch} onPress={() => setSheet("visual")} />
+          </Row>
 
           {strip ? (
             <View style={[st.card, { backgroundColor: p.surface }]}>
@@ -237,6 +238,7 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
 
         <SkipSheet key={`log-${sheetGen}`} open={sheet === "log"} onClose={closeSheet} title="What did you skip?" btn={cfg.btn} ctx={ctx} skin={s.skin} pending={pending} onSubmit={logSkip} />
         <SkipSheet key={`edit-${sheetGen}`} open={sheet === "edit"} onClose={closeSheet} title="Edit this skip" btn="Save" item={editing} ctx={ctx} skin={s.skin} pending={0} onSubmit={saveEdit} />
+        <VisualSheet open={sheet === "visual"} onClose={closeSheet} skin={s.skin} goal={ctx.goal} pct={ctx.pct} onPick={(k) => { if (busy.current) interrupt(); store.saveSettings({ skin: k }); }} />
         <SettingsSheet key={`set-${sheetGen}`} open={sheet === "settings"} onClose={closeSheet} s={s} onSave={(patch) => { setSheet(null); store.saveSettings(patch); showToast("Saved"); }} onRedo={() => { setSheet(null); store.saveSettings({ onboarded: false }); }} />
         <ShareSheet open={sheet === "share"} onClose={closeSheet} ctx={ctx} s={s} skin={s.skin} count={monthly ? items.filter((i) => monthKey(i.at) === nowKey(now)).length : items.length} pct={sharePct} />
         <GoalSheet key={`goal-${sheetGen}`} open={sheet === "goal"} onClose={closeSheet} ctx={goalDemo ? { ...ctx, total: ctx.goal + 85 } : ctx} s={s} skin={s.skin} demo={goalDemo}
