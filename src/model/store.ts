@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSyncExternalStore } from "react";
-import { DEFAULT_SETTINGS, Item, Settings } from "./types";
+import { DEFAULT_SETTINGS, Item, Settings, SkinKey } from "./types";
 import { newId, nowAt, r2 } from "./logic";
 
 /* A small persisted store: everything lives on this phone. */
@@ -10,7 +10,16 @@ const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 const KEY_ITEMS = "skippedit.items", KEY_SETTINGS = "skippedit.settings";
 
-export const mergeSettings = (s: Partial<Settings> | null | undefined): Settings => ({ ...DEFAULT_SETTINGS, ...(s || {}), nudges: { ...DEFAULT_SETTINGS.nudges, ...((s && s.nudges) || {}) } });
+const SKIN_KEYS: SkinKey[] = ["glass", "crow", "summit", "firefly", "tree", "galaxy"];
+const pos = (v: unknown, d: number) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : d);
+/** Fill in missing keys and drop values the app cannot render (an old or unknown skin key, a bad mode or amount), so one stale entry never bricks launch. */
+export const mergeSettings = (s: Partial<Settings> | null | undefined): Settings => {
+  const m: Settings = { ...DEFAULT_SETTINGS, ...(s || {}), nudges: { ...DEFAULT_SETTINGS.nudges, ...((s && s.nudges) || {}) } };
+  if (!SKIN_KEYS.includes(m.skin)) m.skin = DEFAULT_SETTINGS.skin;
+  if (m.mode !== "target" && m.mode !== "monthly") m.mode = DEFAULT_SETTINGS.mode;
+  m.target = pos(m.target, DEFAULT_SETTINGS.target); m.monthly = pos(m.monthly, DEFAULT_SETTINGS.monthly);
+  return m;
+};
 const sortItems = (items: Item[]) => [...items].sort((a, b) => (b.at > a.at ? 1 : b.at < a.at ? -1 : 0));
 
 export async function load() {

@@ -35,11 +35,13 @@ export async function reschedule(items: Item[], s: Settings) {
       const base = last || now; const d = at(base, 10); d.setDate(d.getDate() + s.nudges.nudgeDays);
       if (d > now) await Notifications.scheduleNotificationAsync({ identifier: IDS.nudge, content: { title: "Skipped anything lately?", body: "Even a $4 coffee counts. Two taps and it's in." }, trigger: { type: SchedulableTriggerInputTypes.DATE, date: d } });
     }
-    // Weekly run: a heads-up on Friday evening if there is a run and nothing logged this week yet.
+    // Weekly run: a heads-up on Friday evening of the first week that has no skip yet. When this week is already
+    // covered that is next week's Friday (the schedule is only refreshed when the app opens or a skip is logged, so
+    // a user who stays away all of next week would otherwise never be reminded).
     if (s.nudges.streak) {
       const sk = streakInfo(items, now);
-      if (sk.n > 0 && !sk.alive) {
-        const fri = new Date(weekStart(now)); fri.setDate(fri.getDate() + 4); const d = at(fri, 18);
+      if (sk.n > 0) {
+        const fri = new Date(weekStart(now)); fri.setDate(fri.getDate() + (sk.alive ? 11 : 4)); const d = at(fri, 18);
         if (d > now) await Notifications.scheduleNotificationAsync({ identifier: IDS.run, content: { title: `Your ${sk.n}-week run ends Sunday`, body: "One skip this weekend keeps it going." }, trigger: { type: SchedulableTriggerInputTypes.DATE, date: d } });
       }
     }

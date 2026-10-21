@@ -41,10 +41,14 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
   const [goalDismissed, setGoalDismissed] = useState(0);
   const [sharePct, setSharePct] = useState<number | null>(null);
   const [armed, setArmed] = useState<{ id: string; kind: "edit" | "rm" } | null>(null);
+  // bumped when an add (and its milestone) has finished playing, so effects that wait on `busy` re-run
+  const [settled, setSettled] = useState(0);
+  // refreshed when the app comes back to the foreground, so a month or week boundary crossed while backgrounded is picked up
+  const [now, setNow] = useState(() => new Date());
   const sceneRef = useRef<SceneHandle>(null);
   const busy = useRef(false); const queue = useRef<{ amount: number; what: string }[]>([]); const gen = useRef(0); const celeTimer = useRef<any>(null);
   const playAddRef = useRef<(amount: number, what: string) => Promise<void>>(async () => {});
-  const ctx = useMemo(() => computeCtx(items, s, new Date(), pending, preview), [items, s, pending, preview]);
+  const ctx = useMemo(() => computeCtx(items, s, now, pending, preview), [items, s, now, pending, preview]);
   const ctxRef = useRef(ctx); useEffect(() => { ctxRef.current = ctx; }, [ctx]);
   const monthly = s.mode === "monthly", motion = s.motion !== "calm";
   const V = VISUALS[s.skin] || VISUALS.probe;
@@ -52,17 +56,17 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
   const stageW = Math.min(width - 32, 420), stageH = Math.round(stageW * (V.box.h / V.box.w));
 
   // notifications: ask once, then keep the schedule fresh
-  useEffect(() => { setupNotifications().then(() => reschedule(store.get().items, store.get().settings)); const sub = AppState.addEventListener("change", (st) => { if (st === "active") reschedule(store.get().items, store.get().settings); }); return () => sub.remove(); }, []);
+  useEffect(() => { setupNotifications().then(() => reschedule(store.get().items, store.get().settings)); const sub = AppState.addEventListener("change", (st) => { if (st === "active") { setNow(new Date()); reschedule(store.get().items, store.get().settings); } }); return () => sub.remove(); }, []);
   useEffect(() => { reschedule(items, s); }, [items, s.nudges, s.mode, s.target, s.monthly]);
 
-  // switching visuals clears any celebration card
-  useEffect(() => { const t = setTimeout(() => { clearTimeout(celeTimer.current); setCele(null); }, 0); return () => clearTimeout(t); }, [s.skin]);
   // armed edit/remove buttons disarm after 3 s
   useEffect(() => { if (!armed) return; const t = setTimeout(() => setArmed(null), 3000); return () => clearTimeout(t); }, [armed]);
 
   const showToast = (m: string) => { setToast(""); setTimeout(() => setToast(m), 20); };
   const hideCele = () => { clearTimeout(celeTimer.current); setCele(null); };
   const interrupt = useCallback(() => { gen.current++; busy.current = false; queue.current = []; setPending(0); sceneRef.current?.cancel(); hideCele(); }, []);
+  // switching visuals unmounts the old scene: drop anything in flight (its promise may never resolve) and clear any celebration card
+  useEffect(() => { const t = setTimeout(() => interrupt(), 0); return () => clearTimeout(t); }, [s.skin, interrupt]);
 
   const playMilestone = useCallback(async (pct: number) => {
     const c = ctxRef.current, my = gen.current;
@@ -82,31 +86,33 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
     clearTimeout(celeTimer.current); setCele({ title, line, pct }); celeTimer.current = setTimeout(() => setCele(null), 9000);
   }, [motion, s.mode, s.ackGoal, preview, monthly, cfg]);
 
+  /* A real add is already in the store but held back in `pending` (see logSkip) until its animation has played, so the
+   * scene animates on the old state and the milestone check sees the true before/after. Queued adds stay held back too. */
   const playAdd = useCallback(async (amount: number, what: string) => {
-    if (busy.current) { queue.current.push({ amount, what }); setPending((v) => r2(v + amount)); return; }
+    if (busy.current) { queue.current.push({ amount, what }); return; }
     const my = gen.current, before = ctxRef.current.pct, after = pctOf(ctxRef.current.raw + amount, ctxRef.current.goal);
     busy.current = true;
     if (motion) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     try { await sceneRef.current?.playAdd(amount); } catch {}
     if (my !== gen.current) return;
-    if (preview != null) setPreview((v) => r2((v ?? 0) + amount));
+    if (preview != null) setPreview((v) => r2((v ?? 0) + amount)); else setPending((v) => Math.max(0, r2(v - amount)));
     busy.current = false;
     showToast(`${cfg.toast}: ${what} +${fmt(amount)}`);
     const cr = crossed(before, after);
     if (cr.length && s.nudges.milestones) await playMilestone(cr[cr.length - 1]);
     if (my !== gen.current) return;
     const q = queue.current.shift();
-    if (q) { setPending((v) => Math.max(0, r2(v - q.amount))); setTimeout(() => playAddRef.current(q.amount, q.what), 50); }
+    if (q) setTimeout(() => playAddRef.current(q.amount, q.what), 50); else setSettled((n) => n + 1);
   }, [motion, preview, cfg, s.nudges.milestones, playMilestone]);
   useEffect(() => { playAddRef.current = playAdd; }, [playAdd]);
 
   // goal reached sheet
   useEffect(() => {
     if (s.mode === "target" && preview == null && ctx.total >= ctx.goal && s.ackGoal !== ctx.goal && goalDismissed !== ctx.goal && !busy.current && sheet == null) { setGoalDemo(false); setSheet("goal"); }
-  }, [ctx.total, ctx.goal, s.ackGoal, s.mode, preview, goalDismissed, sheet]);
+  }, [ctx.total, ctx.goal, s.ackGoal, s.mode, preview, goalDismissed, sheet, settled]);
 
   const closeSheet = () => { if (sheet === "goal" && !goalDemo) setGoalDismissed(ctx.goal); setSheet(null); setEditing(null); };
-  const logSkip = (what: string, amount: number) => { setSheet(null); if (preview != null) { playAdd(amount, what); return; } store.addItem(what, amount); playAdd(amount, what); };
+  const logSkip = (what: string, amount: number) => { setSheet(null); if (preview != null) { playAdd(amount, what); return; } setPending((v) => r2(v + amount)); store.addItem(what, amount); playAdd(amount, what); };
   const saveEdit = (what: string, amount: number) => { if (editing) store.updateItem(editing.id, { what, amount }); setSheet(null); setEditing(null); showToast("Updated"); };
 
   // derived display
@@ -232,7 +238,7 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
           onShare={() => { if (!goalDemo) store.saveSettings({ ackGoal: ctx.goal }); setSharePct(100); setSheet("share"); }} />
         <PreviewSheet open={sheet === "preview"} onClose={closeSheet} ctx={ctx} preview={preview}
           onPreview={(v) => setPreview(v)}
-          onAdd={(a, w) => { setSheet(null); if (preview == null) setPreview(ctx.raw); setTimeout(() => playAdd(a, w), 350); }}
+          onAdd={(a, w) => { setSheet(null); if (preview == null) setPreview(ctx.raw); setTimeout(() => playAddRef.current(a, w), 350); }}
           onMilestone={() => { setSheet(null); setTimeout(() => playMilestone(PCT_MS.find((q) => q > ctxRef.current.pct * 100 + 1e-9) || 100), 350); }}
           onGoal={() => { setSheet(null); setTimeout(() => { setGoalDemo(true); setSheet("goal"); }, 350); }}
           onShare={() => { setSharePct(null); setSheet("share"); }}
