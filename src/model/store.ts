@@ -18,6 +18,7 @@ export const mergeSettings = (s: Partial<Settings> | null | undefined): Settings
   if (!SKIN_KEYS.includes(m.skin)) m.skin = DEFAULT_SETTINGS.skin;
   if (m.mode !== "target" && m.mode !== "monthly") m.mode = DEFAULT_SETTINGS.mode;
   m.target = pos(m.target, DEFAULT_SETTINGS.target); m.monthly = pos(m.monthly, DEFAULT_SETTINGS.monthly);
+  m.banked = pos(m.banked, 0); m.bankedGoals = Math.max(0, Math.floor(pos(m.bankedGoals, 0))); if (typeof m.pileStart !== "string") m.pileStart = "";
   return m;
 };
 const sortItems = (items: Item[]) => [...items].sort((a, b) => (b.at > a.at ? 1 : b.at < a.at ? -1 : 0));

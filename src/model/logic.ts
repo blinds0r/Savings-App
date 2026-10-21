@@ -43,12 +43,13 @@ export const nextMonthLabel = (d = new Date()) =>
 /* ---------- the pile ---------- */
 export const goalOf = (s: Settings) => (s.mode === "monthly" ? s.monthly : s.target);
 export function computeCtx(items: Item[], s: Settings, now = new Date(), pendingAnim = 0, override: number | null = null): Ctx {
-  const total = r2(items.reduce((a, i) => a + (Number(i.amount) || 0), 0));
+  const inPile = s.mode === "target" && s.pileStart ? items.filter((i) => i.at >= s.pileStart) : items;
+  const total = r2(inPile.reduce((a, i) => a + (Number(i.amount) || 0), 0));
   const goal = goalOf(s);
   let raw = s.mode === "monthly" ? r2(items.filter((i) => monthKey(i.at) === nowKey(now)).reduce((a, i) => a + (Number(i.amount) || 0), 0)) : total;
   raw = Math.max(0, r2(raw - pendingAnim));
   if (override != null) raw = override;
-  return { total, raw, goal, t: Math.min(raw, goal), pct: pctOf(raw, goal), surplus: Math.max(0, r2(raw - goal)) };
+  return { total, banked: s.mode === "target" ? s.banked || 0 : 0, raw, goal, t: Math.min(raw, goal), pct: pctOf(raw, goal), surplus: Math.max(0, r2(raw - goal)) };
 }
 
 /* ---------- milestones ---------- */

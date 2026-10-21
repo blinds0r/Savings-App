@@ -71,13 +71,13 @@ export function GoalSheet({ open, onClose, ctx, s, skin, demo, onKeep, onNewTarg
       <T kind="display" style={{ fontSize: 26 }}>You did it.</T>
       <T kind="muted">{fmt(ctx.total)} of things you chose not to buy{s.goalName ? `, for ${s.goalName}` : ""}. What now?</T>
       <Card2 testID="grKeep" title="Keep going" sub={`Same target. Everything past it shows up as ${OVER_NOUN[skin]}.`} onPress={() => (demo ? onClose() : onKeep())} />
-      <Card2 testID="grNew" title="Set a new target" sub="A fresh pile toward something bigger." onPress={() => { setMore("new"); setV(String(Math.max(1000, Math.round((ctx.goal * 2) / 500) * 500))); }} />
+      <Card2 testID="grNew" title="Set a new target" sub={`Start a fresh pile from $0. The ${fmt(ctx.total)} you saved stays banked.`} onPress={() => { setMore("new"); setV(String(Math.max(1000, Math.round((ctx.goal * 2) / 500) * 500))); }} />
       <Card2 testID="grMonthly" title="Switch to a monthly goal" sub="A fresh pile every month. Beat it and the extra piles up." onPress={() => { setMore("monthly"); setV(String(s.monthly)); }} />
       {more ? (
         <Card>
           <Field label={more === "new" ? "New target" : "Goal each month"}><BigAmount value={v} onChange={setV} /></Field>
           {err ? <T kind="note" style={{ color: p.accent }}>{err}</T> : null}
-          <Btn big title={more === "new" ? "Set it" : "Switch"} onPress={() => { const n = parseAmt(v); if (demo) return onClose(); const prob = amtProblem(v, n); if (prob) return setErr(prob); if (more === "new") { if (n > ctx.total) onNewTarget(n); else setErr(`Pick something above ${fmt(ctx.total)}.`); } else if (n > 0) onMonthly(n); else setErr("Enter an amount above $0."); }} />
+          <Btn big title={more === "new" ? "Set it" : "Switch"} onPress={() => { const n = parseAmt(v); if (demo) return onClose(); const prob = amtProblem(v, n); if (prob) return setErr(prob); if (more === "new") { if (n > 0) onNewTarget(n); else setErr("Enter an amount above $0."); } else if (n > 0) onMonthly(n); else setErr("Enter an amount above $0."); }} />
         </Card>
       ) : null}
       <Btn kind="ghost" big title="Share this first" onPress={onShare} />

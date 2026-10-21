@@ -10,13 +10,14 @@ import { Figtree_500Medium } from "@expo-google-fonts/figtree/500Medium";
 import { Figtree_600SemiBold } from "@expo-google-fonts/figtree/600SemiBold";
 import { Figtree_700Bold } from "@expo-google-fonts/figtree/700Bold";
 import { SKINS, SKIN_KEYS } from "../copy";
-import { CAMPS, computeCtx, countOf, crossed, fmt, int, monthName, monthsStrip, msAmounts, nextMonthLabel, nowKey, pctOf, pctTxt, PCT_MS, r2, REGION_NAMES, shortAmt, streakBanner, streakInfo, TREASURE_NAMES, dateOf, monthKey } from "../model/logic";
+import { CAMPS, computeCtx, countOf, crossed, fmt, int, monthName, monthsStrip, msAmounts, nextMonthLabel, nowKey, pctOf, pctTxt, PCT_MS, r2, REGION_NAMES, shortAmt, streakBanner, streakInfo, TREASURE_NAMES, dateOf, monthKey, nowAt } from "../model/logic";
 import { load, store, useStore } from "../model/store";
 import type { Item, Settings, VisualState } from "../model/types";
 import { reschedule, setupNotifications } from "../notify";
 import { FONT, PALETTES, SCENES } from "../theme";
 import { Btn, Chip, IconBtn, Row, T, ThemeCtx, Toast, useTheme } from "../ui";
 import { VisualSheet } from "./VisualGrid";
+import { Ladder } from "./Ladder";
 import { VISUALS } from "../visuals";
 import type { SceneHandle } from "../visuals/contract";
 import { Onboarding } from "./Onboarding";
@@ -159,12 +160,14 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
             </Row>
             {ctx.surplus > 0 ? <T kind="muted" style={{ fontSize: 16 }}>{monthly ? "This month's goal beaten" : "Target reached"} · <T kind="bold" style={{ color: p.accent, fontSize: 16 }}>{cfg.overText(ctx.surplus)}</T></T>
               : <T kind="muted" style={{ fontSize: 16 }}>{cfg.sub(ctx)}{monthly ? ` · resets ${nextMonthLabel()}` : ""}</T>}
+            {!monthly && ctx.banked > 0 ? <T kind="note" testID="banked">Plus {fmt(ctx.banked)} banked from {s.bankedGoals === 1 ? "a goal you already hit" : `${s.bankedGoals} goals you already hit`}</T> : null}
           </View>
 
           {/* stage: the scene band runs edge to edge behind the visual */}
           <View style={{ marginHorizontal: -16, backgroundColor: page, paddingVertical: scene ? 0 : 0 }}>
             <View style={{ alignSelf: "center", width: stageW, height: stageH }}>
               <V.Scene ref={sceneRef} state={vState} width={stageW} height={stageH} motion={motion} background={scene} />
+              <Ladder testID="ladder" skin={s.skin} pct={vState.pct} goal={ctx.goal} height={stageH} side={s.skin === "summit" ? "right" : "left"} />
             </View>
             {cele ? (
               <View style={[st.cele, { backgroundColor: p.surface, borderColor: p.line }]} accessibilityLiveRegion="polite">
@@ -212,7 +215,9 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
             <View style={{ borderTopWidth: 1, borderTopColor: p.line }}>
               {!items.length ? <T kind="muted" style={{ paddingVertical: 16 }}>Nothing yet. Add the first thing you skipped.</T> : null}
               {items.map((it, i) => {
-                const sep = monthly && (i === 0 || (monthKey(items[i - 1].at) === nowKey()) !== (monthKey(it.at) === nowKey())) ? (monthKey(it.at) === nowKey() ? "This month" : "Earlier") : null;
+                const bankedRow = !monthly && !!s.pileStart && it.at < s.pileStart;
+                const sep = monthly ? ((i === 0 || (monthKey(items[i - 1].at) === nowKey()) !== (monthKey(it.at) === nowKey())) ? (monthKey(it.at) === nowKey() ? "This month" : "Earlier") : null)
+                  : bankedRow && (i === 0 || items[i - 1].at >= s.pileStart) ? `Banked · ${fmt(ctx.banked)}` : null;
                 const aEd = armed?.id === it.id && armed.kind === "edit", aRm = armed?.id === it.id && armed.kind === "rm";
                 return (
                   <View key={it.id}>
@@ -243,7 +248,7 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
         <ShareSheet open={sheet === "share"} onClose={closeSheet} ctx={ctx} s={s} skin={s.skin} count={monthly ? items.filter((i) => monthKey(i.at) === nowKey(now)).length : items.length} pct={sharePct} />
         <GoalSheet key={`goal-${sheetGen}`} open={sheet === "goal"} onClose={closeSheet} ctx={goalDemo ? { ...ctx, total: ctx.goal + 85 } : ctx} s={s} skin={s.skin} demo={goalDemo}
           onKeep={() => { setSheet(null); store.saveSettings({ ackGoal: ctx.goal }); }}
-          onNewTarget={(v) => { setSheet(null); store.saveSettings({ target: v, ackGoal: 0 }); }}
+          onNewTarget={(v) => { setSheet(null); store.saveSettings({ target: v, ackGoal: 0, pileStart: nowAt(), banked: r2((s.banked || 0) + ctx.total), bankedGoals: (s.bankedGoals || 0) + 1 }); showToast(`${fmt(ctx.total)} banked. Fresh pile.`); }}
           onMonthly={(v) => { setSheet(null); store.saveSettings({ mode: "monthly", monthly: v, ackGoal: ctx.goal }); }}
           onShare={() => { if (!goalDemo) store.saveSettings({ ackGoal: ctx.goal }); setSharePct(100); setSheet("share"); }} />
         <PreviewSheet open={sheet === "preview"} onClose={closeSheet} ctx={ctx} preview={preview}

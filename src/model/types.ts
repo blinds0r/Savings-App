@@ -28,6 +28,11 @@ export interface Settings {
   /** A target the goal sheet was dismissed for without choosing (shown again next launch). */
   motion: "full" | "calm";
   nudges: Nudges;
+  /** Target mode: skips logged before this moment ("YYYY-MM-DDTHH:MM:SS") belong to a finished goal and sit outside the pile. "" = all skips count. */
+  pileStart: string;
+  /** Dollars banked by finished goals, and how many goals that was. */
+  banked: number;
+  bankedGoals: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -40,6 +45,9 @@ export const DEFAULT_SETTINGS: Settings = {
   ackGoal: 0,
   motion: "full",
   nudges: { milestones: true, nudgeDays: 4, recap: true, streak: true },
+  pileStart: "",
+  banked: 0,
+  bankedGoals: 0,
 };
 
 /** What a visual needs to draw itself. pct is 0..1 of the goal; surplus is dollars past it. */
@@ -50,8 +58,10 @@ export interface VisualState {
 }
 
 export interface Ctx {
-  /** Every skip ever, in dollars. */
+  /** Every skip in the current goal, in dollars (banked goals excluded). */
   total: number;
+  /** Dollars from goals already finished (target mode). */
+  banked: number;
   /** What counts toward the current pile (all time, or this month). */
   raw: number;
   goal: number;
