@@ -4,7 +4,7 @@ import {
   drawAsImage, rect, useFont, useRSXformBuffer, vec,
 } from "@shopify/react-native-skia";
 import type { SkFont, SkImage, SkPath } from "@shopify/react-native-skia";
-import { Easing, cancelAnimation, runOnJS, useDerivedValue, useFrameCallback, useSharedValue, withSequence, withTiming } from "react-native-reanimated";
+import { Easing, cancelAnimation, runOnJS, useDerivedValue, useFrameCallback, useSharedValue, withSequence, withTiming , ReduceMotion } from "react-native-reanimated";
 import type { SharedValue } from "react-native-reanimated";
 import type { SceneHandle, SceneProps, VisualDef } from "../contract";
 import { fitBox } from "../contract";
@@ -152,25 +152,25 @@ function Bird({ motion, clock, rustle, nRef }: { motion: boolean; clock: SharedV
     const wait = (ms: number) => new Promise<void>((res) => { const t = setTimeout(() => { timers.delete(t); res(); }, ms); timers.add(t); });
     const setFace = async (nf: number, dur = 160) => {
       if (nf === f) return;
-      face.value = withSequence(withTiming(0.05, { duration: dur / 2 }), withTiming(nf, { duration: dur / 2 }));
+      face.value = withSequence(withTiming(0.05, { reduceMotion: ReduceMotion.Never,  duration: dur / 2 }), withTiming(nf, { reduceMotion: ReduceMotion.Never,  duration: dur / 2 }));
       f = nf; await wait(dur);
     };
-    const peck = async () => { peckT.value = 0; peckT.value = withTiming(1, { duration: 700, easing: Easing.linear }); await wait(700); };
+    const peck = async () => { peckT.value = 0; peckT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: 700, easing: Easing.linear }); await wait(700); };
     const doHop = async () => {
       if (busy || !live) return; busy = true;
       let to = at; while (to === at) to = Math.floor(Math.random() * SPOTS.length);
       const [x0, y0] = SPOTS[at], [x1, y1] = SPOTS[to], dx = x1 - x0, dy = y1 - y0, dist = Math.hypot(dx, dy), lift = 22 + Math.min(40, dist * 0.25);
       await setFace(dx >= 0 ? 1 : -1); if (!live) return;
-      sx.value = withTiming(1.08, { duration: 140 }); sy.value = withTiming(0.86, { duration: 140 }); await wait(140); if (!live) return;
+      sx.value = withTiming(1.08, { reduceMotion: ReduceMotion.Never,  duration: 140 }); sy.value = withTiming(0.86, { reduceMotion: ReduceMotion.Never,  duration: 140 }); await wait(140); if (!live) return;
       const dur = 520 + dist * 1.6;
       hop.value = { x0, y0, x1, y1, midY: Math.min(0, dy) - lift }; hopT.value = 0;
-      hopT.value = withTiming(1, { duration: dur, easing: Easing.bezier(0.35, 0.1, 0.55, 1) });
-      wing.value = withSequence(withTiming(-40, { duration: 140 }), withTiming(18, { duration: 140 }), withTiming(-30, { duration: 140 }), withTiming(0, { duration: 140 }));
-      sx.value = withTiming(1, { duration: 120 }); sy.value = withTiming(1, { duration: 120 });
+      hopT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: dur, easing: Easing.bezier(0.35, 0.1, 0.55, 1) });
+      wing.value = withSequence(withTiming(-40, { reduceMotion: ReduceMotion.Never,  duration: 140 }), withTiming(18, { reduceMotion: ReduceMotion.Never,  duration: 140 }), withTiming(-30, { reduceMotion: ReduceMotion.Never,  duration: 140 }), withTiming(0, { reduceMotion: ReduceMotion.Never,  duration: 140 }));
+      sx.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: 120 }); sy.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: 120 });
       await wait(dur); if (!live) return;
       at = to;
-      sx.value = withSequence(withTiming(1.1, { duration: 112 }), withTiming(0.97, { duration: 112 }), withTiming(1, { duration: 96 }));
-      sy.value = withSequence(withTiming(0.85, { duration: 112 }), withTiming(1.04, { duration: 112 }), withTiming(1, { duration: 96 }));
+      sx.value = withSequence(withTiming(1.1, { reduceMotion: ReduceMotion.Never,  duration: 112 }), withTiming(0.97, { reduceMotion: ReduceMotion.Never,  duration: 112 }), withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: 96 }));
+      sy.value = withSequence(withTiming(0.85, { reduceMotion: ReduceMotion.Never,  duration: 112 }), withTiming(1.04, { reduceMotion: ReduceMotion.Never,  duration: 112 }), withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: 96 }));
       await wait(320); busy = false;
     };
     const fidget = async () => {
@@ -300,12 +300,12 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function TreeScene({ state, wi
       const dur = 140 * k + 600;
       add.value = { on: true, n: nn, k, dur, seed: Math.random() * 1000 };
       addT.value = 0;
-      addT.value = withTiming(1, { duration: motion ? dur : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
+      addT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? dur : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
     }),
     playMilestone: () => new Promise<void>((res) => {
       ms.value = { on: true, seed: Math.random() * 1000 };
       msT.value = 0;
-      msT.value = withTiming(1, { duration: motion ? D_MS : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
+      msT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? D_MS : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
     }),
     cancel: () => {
       cancelAnimation(addT); cancelAnimation(msT); addT.value = 0; msT.value = 0;

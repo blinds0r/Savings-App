@@ -3,7 +3,7 @@
  * background "Dusty attic" (backgrounds/crow.js [3]). */
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { Atlas, Canvas, Circle, Group, LinearGradient, Oval, Path, Picture, Rect, RoundedRect, Skia, PaintStyle, StrokeCap, TileMode, Text, createPicture, useColorBuffer, useFont, useRSXformBuffer, vec, type SkCanvas, type SkFont, type SkPicture, type SkRect } from "@shopify/react-native-skia";
-import { cancelAnimation, runOnJS, useDerivedValue, useFrameCallback, useSharedValue, withTiming, Easing, type SharedValue } from "react-native-reanimated";
+import { cancelAnimation, runOnJS, useDerivedValue, useFrameCallback, useSharedValue, withTiming, Easing, type SharedValue , ReduceMotion } from "react-native-reanimated";
 import type { SceneHandle, SceneProps, VisualDef } from "../contract";
 import { fitBox } from "../contract";
 import type { VisualState } from "../../model/types";
@@ -274,11 +274,11 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function CrowScene({ state, wi
         return createPicture((c) => drawItem(c, { ...t, x: 0, y: 0 }, i + Math.round(t.x), kind), Skia.XYWHRect(-16, -16, 32, 32));
       });
       setPlan({ k, targets, pics, gem });
-      addT.value = withTiming(1, { duration: motion ? addDurFor(k) : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
+      addT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? addDurFor(k) : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
     }),
     playMilestone: () => new Promise<void>((res) => {
       cancelAnimation(msT); msT.value = 0;
-      msT.value = withTiming(1, { duration: motion ? MS_DUR : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
+      msT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? MS_DUR : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
     }),
     cancel: () => { cancelAnimation(addT); cancelAnimation(msT); addT.value = 0; msT.value = 0; setPlan(null); },
   }), [motion, state]);

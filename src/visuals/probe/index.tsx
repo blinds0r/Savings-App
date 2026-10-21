@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle, useMemo } from "react";
 import { Canvas, Circle, Group, Rect, Path, Skia } from "@shopify/react-native-skia";
-import { useSharedValue, withTiming, withRepeat, useDerivedValue, Easing, runOnJS, cancelAnimation } from "react-native-reanimated";
+import { useSharedValue, withTiming, withRepeat, useDerivedValue, Easing, runOnJS, cancelAnimation , ReduceMotion } from "react-native-reanimated";
 import type { SceneHandle, SceneProps, VisualDef } from "../contract";
 import { fitBox } from "../contract";
 
@@ -12,10 +12,10 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function ProbeScene({ state, w
   const clock = useSharedValue(0);
   const addT = useSharedValue(0);
   const msT = useSharedValue(0);
-  React.useEffect(() => { clock.value = 0; clock.value = withRepeat(withTiming(1, { duration: 4000, easing: Easing.linear }), -1, false); return () => cancelAnimation(clock); }, []);
+  React.useEffect(() => { clock.value = 0; clock.value = withRepeat(withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: 4000, easing: Easing.linear }), -1, false, undefined, ReduceMotion.Never); return () => cancelAnimation(clock); }, []);
   useImperativeHandle(ref, () => ({
-    playAdd: (amount) => new Promise<void>((res) => { addT.value = 0; addT.value = withTiming(1, { duration: motion ? 900 : 0 }, () => { runOnJS(res)(); }); }),
-    playMilestone: () => new Promise<void>((res) => { msT.value = 0; msT.value = withTiming(1, { duration: motion ? 1200 : 0 }, () => { runOnJS(res)(); }); }),
+    playAdd: (amount) => new Promise<void>((res) => { addT.value = 0; addT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? 900 : 0 }, () => { runOnJS(res)(); }); }),
+    playMilestone: () => new Promise<void>((res) => { msT.value = 0; msT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? 1200 : 0 }, () => { runOnJS(res)(); }); }),
     cancel: () => { cancelAnimation(addT); cancelAnimation(msT); addT.value = 0; msT.value = 0; },
   }), [motion]);
   const transform = useMemo(() => [{ translateX: fit.tx }, { translateY: fit.ty }, { scale: fit.scale }], [fit]);

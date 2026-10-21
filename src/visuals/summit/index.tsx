@@ -1,7 +1,7 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo } from "react";
 import { Atlas, Canvas, Circle, DashPathEffect, Group, LinearGradient, Oval, Path, RoundedRect, Rect, Text, useFont, useRectBuffer, useRSXformBuffer, useTexture, vec } from "@shopify/react-native-skia";
 import type { SkFont } from "@shopify/react-native-skia";
-import { useSharedValue, withTiming, withRepeat, useDerivedValue, Easing, runOnJS, cancelAnimation } from "react-native-reanimated";
+import { useSharedValue, withTiming, withRepeat, useDerivedValue, Easing, runOnJS, cancelAnimation , ReduceMotion } from "react-native-reanimated";
 import type { SharedValue } from "react-native-reanimated";
 import type { SceneHandle, SceneProps, VisualDef } from "../contract";
 import {
@@ -196,7 +196,7 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function SummitScene({ state, 
   const msP = useSharedValue({ x: 0, y: 0 });
   const f9 = useFont(FIGTREE, 9), f10 = useFont(FIGTREE, 10), f11 = useFont(FIGTREE, 11), f85 = useFont(FIGTREE, 8.5);
 
-  useEffect(() => { clock.value = 0; clock.value = withRepeat(withTiming(3600, { duration: 3600000, easing: Easing.linear }), -1, false); return () => cancelAnimation(clock); }, []);
+  useEffect(() => { clock.value = 0; clock.value = withRepeat(withTiming(3600, { reduceMotion: ReduceMotion.Never,  duration: 3600000, easing: Easing.linear }), -1, false, undefined, ReduceMotion.Never); return () => cancelAnimation(clock); }, []);
   // the host re-renders at the new pct once an add resolves: the walk is then baked into `pct`
   useEffect(() => { cancelAnimation(addT); addT.value = 0; }, [pct]);
   useImperativeHandle(ref, () => ({
@@ -205,13 +205,13 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function SummitScene({ state, 
       const dur = clamp(700 + (p1 - p0) * 3000 * 14, 800, 2800), total = 560 + dur + 450 + 250 + 560;
       addP.value = { p0, p1, vb: hikeBox(p0, p1), dur, total };
       addT.value = 0;
-      addT.value = withTiming(1, { duration: motion ? total : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
+      addT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? total : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
     }),
     playMilestone: () => new Promise<void>((res) => {
       const q = trailAt(pct);
       msP.value = { x: q.x, y: q.y };
       msT.value = 0;
-      msT.value = withTiming(1, { duration: motion ? MS_TOTAL : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
+      msT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? MS_TOTAL : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
     }),
     cancel: () => { cancelAnimation(addT); cancelAnimation(msT); addT.value = 0; msT.value = 0; },
   }), [motion, pct, goal]);

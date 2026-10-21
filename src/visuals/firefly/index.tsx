@@ -1,7 +1,7 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo } from "react";
 import { Atlas, Canvas, Circle, Group, Oval, Path, RadialGradient, RoundedRect, Rect, Text, useFont, useRectBuffer, useRSXformBuffer, useTexture, vec } from "@shopify/react-native-skia";
 import type { SkFont } from "@shopify/react-native-skia";
-import { useSharedValue, withTiming, withRepeat, useDerivedValue, Easing, runOnJS, cancelAnimation } from "react-native-reanimated";
+import { useSharedValue, withTiming, withRepeat, useDerivedValue, Easing, runOnJS, cancelAnimation , ReduceMotion } from "react-native-reanimated";
 import type { SharedValue } from "react-native-reanimated";
 import type { SceneHandle, SceneProps, VisualDef } from "../contract";
 import {
@@ -126,7 +126,7 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function FireflyScene({ state,
   const msP = useSharedValue<MsParams>(NO_MS);
   const f10 = useFont(FIGTREE, 9.5);
 
-  useEffect(() => { clock.value = 0; clock.value = withRepeat(withTiming(3600, { duration: 3600000, easing: Easing.linear }), -1, false); return () => cancelAnimation(clock); }, []);
+  useEffect(() => { clock.value = 0; clock.value = withRepeat(withTiming(3600, { reduceMotion: ReduceMotion.Never,  duration: 3600000, easing: Easing.linear }), -1, false, undefined, ReduceMotion.Never); return () => cancelAnimation(clock); }, []);
   useEffect(() => { cancelAnimation(addT); addT.value = 0; }, [n]);
   useImperativeHandle(ref, () => ({
     playAdd: (amount) => new Promise<void>((res) => {
@@ -136,7 +136,7 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function FireflyScene({ state,
       const total = 2500 + Math.max(900 + (k - 1) * 90, 900);
       addP.value = { k, total, dx, dy, jx };
       addT.value = 0;
-      addT.value = withTiming(1, { duration: motion ? total : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
+      addT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? total : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
     }),
     playMilestone: (mpct) => new Promise<void>((res) => {
       const dots = textDots(`${Math.round(mpct)}%`, JX, 16, 8);
@@ -147,7 +147,7 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function FireflyScene({ state,
       for (let pi = order.length; pi < dots.length; pi++) map[TEMP0 + (pi - order.length)] = pi;
       msP.value = { map, n: dots.length, tx: dots.map((d) => d[0]), ty: dots.map((d) => d[1]) };
       msT.value = 0;
-      msT.value = withTiming(1, { duration: motion ? MS_D : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
+      msT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? MS_D : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
     }),
     cancel: () => { cancelAnimation(addT); cancelAnimation(msT); addT.value = 0; msT.value = 0; },
   }), [motion, n, goal]);

@@ -4,7 +4,7 @@ import {
   drawAsImage, rect, useColorBuffer, useRSXformBuffer, vec,
 } from "@shopify/react-native-skia";
 import type { SkImage, SkPath } from "@shopify/react-native-skia";
-import { Easing, cancelAnimation, runOnJS, useDerivedValue, useFrameCallback, useSharedValue, withTiming } from "react-native-reanimated";
+import { Easing, cancelAnimation, runOnJS, useDerivedValue, useFrameCallback, useSharedValue, withTiming , ReduceMotion } from "react-native-reanimated";
 import type { SharedValue } from "react-native-reanimated";
 import type { SceneHandle, SceneProps, VisualDef } from "../contract";
 import { fitBox } from "../contract";
@@ -172,12 +172,12 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function GalaxyScene({ state, 
       let maxR = 60; for (let i = n0; i < n0 + k; i++) maxR = Math.max(maxR, STR[i]);
       add.value = { on: true, n: n0, k, maxR: maxR + 25, seed: Math.random() * 1000 };
       addT.value = 0;
-      addT.value = withTiming(1, { duration: motion ? D_ADD : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
+      addT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? D_ADD : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
     }),
     playMilestone: () => new Promise<void>((res) => {
       ms.value = { on: true, seed: Math.random() * 1000 };
       msT.value = 0;
-      msT.value = withTiming(1, { duration: motion ? D_MS : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
+      msT.value = withTiming(1, { reduceMotion: ReduceMotion.Never,  duration: motion ? D_MS : 0, easing: Easing.linear }, () => { runOnJS(res)(); });
     }),
     cancel: () => {
       cancelAnimation(addT); cancelAnimation(msT); addT.value = 0; msT.value = 0;
