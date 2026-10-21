@@ -92,7 +92,7 @@ const SPARK = (s: number) => `M0 ${-s} L${s * 0.27} ${-s * 0.27} L${s} 0 L${s * 
 const Q = 4, CW = 18 * Q, CH = 24 * Q, AX = 9 * Q, AY = 21 * Q, NV = 12;
 const variantOf = (deg: number) => ((Math.round(deg / 30) % NV) + NV) % NV;
 function LeafSheet({ font }: { font: SkFont }) {
-  const w = font.measureText("$").width;
+  const w = font.getGlyphWidths(font.getGlyphIDs("$")).reduce((a, b) => a + b, 0);
   return (
     <Group>
       {Array.from({ length: NV }, (_, v) => (

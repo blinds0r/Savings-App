@@ -240,7 +240,7 @@ function Bubble({ text, x, y, size, font, prog }: { text: string; x: number; y: 
   // prog: ms since the bubble started, or -1
   const w = text.length * size * 0.62 + 18;
   const path = useMemo(() => Skia.Path.MakeFromSVGString(`M0 0 L-6 -10 L${-w + 8} -10 Q${-w} -10 ${-w} -18 L${-w} ${-size - 16} Q${-w} ${-size - 24} ${-w + 8} ${-size - 24} L-8 ${-size - 24} Q0 ${-size - 24} 0 ${-size - 16} Z`)!, [w, size]);
-  const tw = font ? font.measureText(text).width : 0;
+  const tw = font ? font.getGlyphWidths(font.getGlyphIDs(text)).reduce((a, b) => a + b, 0) : 0;
   const tr = useDerivedValue(() => { const ms = prog.value; const s = ms < 0 ? 0 : ms < 320 ? kf(easeOut(ms / 320), [0, 0.6, 1], [0, 1.12, 1]) : 1; return [{ translateX: x }, { translateY: y }, { scale: s }]; });
   const op = useDerivedValue(() => { const ms = prog.value; return ms < 0 ? 0 : 1; });
   if (!font) return null;

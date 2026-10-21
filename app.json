@@ -2,17 +2,11 @@
   "expo": {
     "name": "Skipped It",
     "slug": "savings-app",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "scheme": "skippedit",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0B0A1A"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.skippedit.app",
