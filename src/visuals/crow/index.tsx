@@ -46,7 +46,19 @@ const PEEK_DUR = 1.7; // peek(hold 1100) = hold + 600 ms
 const T_CROUCH = 0, T_SPRING = 200, T_FLY = 290, FLY_D = 1150, T_WAIT = T_FLY + FLY_D, T_BACK = T_WAIT + 260, BACK_D = 1250, T_LAND = T_BACK + BACK_D, T_TILT = T_LAND + 260, T_DROP = T_TILT + 220;
 const DROP_GAP = 150, DROP_FALL = 460;
 function dropEnd(k: number) { "worklet"; return T_DROP + (k - 1) * DROP_GAP + DROP_FALL; }
-function addDurFor(k: number) { "worklet"; return dropEnd(k) + 260; }
+/** After the last item drops, a small happy hop: crouch, spring up, land with a squash. */
+const HOP_AT = 180, HOP_D = 520;
+function addDurFor(k: number) { "worklet"; return dropEnd(k) + HOP_AT + HOP_D + 40; }
+interface Hop { y: number; sx: number; sy: number; wing: number }
+function hop(h: number): Hop {
+  "worklet";
+  if (h < 0 || h >= HOP_D) return { y: 0, sx: 1, sy: 1, wing: 0 };
+  if (h < 90) { const k = h / 90; return { y: 4 * k, sx: 1 + 0.05 * k, sy: 1 - 0.09 * k, wing: -6 * k }; }
+  if (h < 300) { const k = (h - 90) / 210, e = 1 - Math.pow(1 - k, 3); return { y: 4 - 18 * e, sx: 1.05 - 0.07 * k, sy: 0.91 + 0.13 * k, wing: -6 - 16 * Math.sin(Math.PI * k) }; }
+  if (h < 460) { const k = (h - 300) / 160; return { y: -14 + 14 * k * k, sx: 0.98 + 0.02 * k, sy: 1.04 - 0.04 * k, wing: -8 * (1 - k) }; }
+  const k = (h - 460) / 60, b = Math.sin(Math.PI * k);
+  return { y: 0, sx: 1 + 0.04 * b, sy: 1 - 0.07 * b, wing: 0 };
+}
 // flight paths and wing plans (SK prototype)
 const PA = [0, 0, 18, -70, 130, -170, 270, -300], PB = [250, -170, 160, -230, 70, -40, 0, 0];
 const PLAN_A = [0, 420, 1, 135, 40, 420, 600, 0, 0, -24, 600, 860, 1, 165, 30, 860, 2000, 0, 0, -20];
@@ -304,14 +316,17 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function CrowScene({ state, wi
   const msMs = useDerivedValue(() => (msT.value > 0 ? msT.value * MS_DUR : -1));
   const crowTr = useDerivedValue(() => {
     let x = 0, y = 0, ang = 0, sx = 1, sy = 1, ox = 280, oy = 150;
-    if (addMs.value >= 0) { const p = pose(addMs.value); x = p.x; y = p.y; ang = p.ang; sx = p.sx; sy = p.sy; ox = p.ox; oy = p.oy; }
+    if (addMs.value >= 0) {
+      const p = pose(addMs.value); x = p.x; y = p.y; ang = p.ang; sx = p.sx; sy = p.sy; ox = p.ox; oy = p.oy;
+      const hp = hop(addMs.value - dropEnd(Math.max(1, kSV.value)) - HOP_AT); y += hp.y; sx *= hp.sx; sy *= hp.sy;
+    }
     else if (msMs.value >= 0 && msMs.value <= 1700) {
       const e = easeOut(msMs.value / 1700), o = [0, 0.3, 0.5, 0.7, 1];
       x = kf(e, o, [0, -10, -8, -9, 0]); sx = sy = kf(e, o, [1, 1.18, 1.12, 1.15, 1]);
     }
     return [{ translateX: ox + x }, { translateY: oy + y }, { rotate: rad(ang) }, { scaleX: sx }, { scaleY: sy }, { translateX: -ox }, { translateY: -oy }];
   });
-  const wingTr = useDerivedValue(() => [{ rotate: addMs.value >= 0 ? rad(pose(addMs.value).wing) : 0 }]);
+  const wingTr = useDerivedValue(() => [{ rotate: addMs.value >= 0 ? rad(pose(addMs.value).wing + hop(addMs.value - dropEnd(Math.max(1, kSV.value)) - HOP_AT).wing) : 0 }]);
   const legsTr = useDerivedValue(() => { if (addMs.value < 0) return [{ scaleY: 1 }]; const p = pose(addMs.value); return [{ rotate: rad(p.legRot) }, { scaleY: p.legSy }]; });
   const headTr = useDerivedValue(() => {
     let a = 0, tx = 0, ty = 0;
