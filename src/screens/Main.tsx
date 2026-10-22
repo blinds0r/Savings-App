@@ -10,7 +10,7 @@ import { Figtree_500Medium } from "@expo-google-fonts/figtree/500Medium";
 import { Figtree_600SemiBold } from "@expo-google-fonts/figtree/600SemiBold";
 import { Figtree_700Bold } from "@expo-google-fonts/figtree/700Bold";
 import { SKINS, SKIN_KEYS } from "../copy";
-import { CAMPS, computeCtx, countOf, crossed, fmt, int, monthName, monthsStrip, msAmounts, nextMonthLabel, nowKey, pctOf, pctTxt, PCT_MS, r2, REGION_NAMES, shortAmt, streakBanner, streakInfo, TREASURE_NAMES, dateOf, monthKey, nowAt } from "../model/logic";
+import { CAMPS, computeCtx, countOf, crossed, fmt, int, monthName, monthsStrip, msAmounts, nextMonthLabel, nowKey, pctOf, pctTxt, PCT_MS, r2, REGION_NAMES, shortAmt, streakInfo, TREASURE_NAMES, dateOf, monthKey, nowAt } from "../model/logic";
 import { load, store, useStore } from "../model/store";
 import type { Item, Settings, VisualState } from "../model/types";
 import { reschedule, setupNotifications } from "../notify";
@@ -19,6 +19,7 @@ import { Btn, Chip, IconBtn, Row, T, ThemeCtx, Toast, useTheme } from "../ui";
 import { VisualSheet } from "./VisualGrid";
 import { Ladder } from "./Ladder";
 import { TopTiles, YearSheet } from "./YearSheet";
+import { StreakRow } from "./Streak";
 import { VISUALS } from "../visuals";
 import type { SceneHandle } from "../visuals/contract";
 import { Onboarding } from "./Onboarding";
@@ -129,16 +130,15 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
   // derived display
   const MS = msAmounts(ctx.goal), nx = MS.find((m) => m > ctx.raw + 1e-9);
   const nxName = nx ? (cfg.ms === "treasures" ? "the " + TREASURE_NAMES[MS.indexOf(nx)].toLowerCase() : cfg.ms === "regions" ? REGION_NAMES[MS.indexOf(nx)].toLowerCase() : fmt(nx)) : "";
-  const sk = streakInfo(items), banner = streakBanner(sk, s.nudges.streak);
+  const sk = streakInfo(items, now);
   const avg = items.length ? fmt(r2(ctx.total / items.length)) : "–";
   const stats: [string, string][] = s.skin === "summit"
     ? (() => { const nc = CAMPS.find((f) => f > ctx.pct + 1e-9); return [["Skips", String(items.length)], ["Next camp", nc ? (nc === 1 ? "Summit" : fmt(Math.ceil(nc * ctx.goal))) : "Done"], ["To go", nc ? `${int((nc - ctx.pct) * 3000)} m` : "0 m"]] as [string, string][]; })()
     : s.skin === "galaxy" ? [["Stars", `${countOf(ctx.pct, 150)} / 150`], ["Skips", String(items.length)], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]]
     : s.skin === "firefly" || s.skin === "tree" ? [[s.skin === "tree" ? "Leaves" : "Caught", `${countOf(ctx.pct, 300)} / 300`], ["Skips", String(items.length)], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]]
     : [[s.skin === "crow" ? "Finds" : "Skips", String(items.length)], ["Average", avg], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]];
-  if (s.nudges.streak) stats[1] = ["Weekly run", sk.n ? `${sk.n} wk${sk.n === 1 ? "" : "s"}` : "–"];
-  // monthly mode: three slim tiles above the visual instead of the stats row (weekly run or skips this month, to go, all time)
-  const tileFirst: [string, string] = s.nudges.streak ? stats[1] : ["Skips", String(items.filter((i) => monthKey(i.at) === nowKey(now)).length)];
+  // monthly mode: three slim tiles above the visual instead of the stats row (skips this month, to go, all time); the streak sits at the top
+  const tileFirst: [string, string] = ["Skips", String(items.filter((i) => monthKey(i.at) === nowKey(now)).length)];
   const tileSecond: [string, string] = ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))];
   const allTime = r2(items.reduce((a, i) => a + (Number(i.amount) || 0), 0));
   const strip = monthly ? monthsStrip(items, ctx.goal, ctx.raw) : null;
@@ -150,6 +150,7 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
       <StatusBar barStyle={p.dark ? "light-content" : "dark-content"} />
       <View style={{ flex: 1, backgroundColor: p.bg }}>
         <ScrollView contentContainerStyle={{ paddingTop: ins.top + 12, paddingBottom: ins.bottom + 110, paddingHorizontal: 16, gap: 20 }}>
+          <View style={{ gap: 4 }}>
           <Row style={{ justifyContent: "space-between" }}>
             <T kind="eyebrow" style={{ flex: 1 }} numberOfLines={2}>{monthly ? `${s.goalName ? s.goalName + " · " : ""}${monthName(nowKey(), true)} · ${fmt(ctx.goal)} a month` : `${s.goalName || cfg.eyebrow(ctx.goal)} · goal ${fmt(ctx.goal)}`}</T>
             <Row style={{ gap: 6 }}>
@@ -158,6 +159,8 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
               <IconBtn label="Settings" testID="setBtn" onPress={() => setSheet("settings")}><Glyph kind="sliders" color={p.fg} /></IconBtn>
             </Row>
           </Row>
+          {s.nudges.streak && preview == null ? <StreakRow sk={sk} onLog={() => { setEditing(null); setSheet("log"); }} /> : null}
+          </View>
           <View style={{ gap: 6 }}>
             <Row style={{ justifyContent: "space-between", alignItems: "center", gap: 10 }}>
               <T kind="display" testID="amount" numberOfLines={1} adjustsFontSizeToFit style={{ fontSize: amountText.length > 11 ? 36 : amountText.length > 9 ? 44 : 60, lineHeight: amountText.length > 9 ? 48 : 62, fontVariant: ["tabular-nums"] }}>{amountText}</T>
@@ -213,7 +216,6 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
           ) : null}
 
           {monthly ? null : <Row style={{ gap: 10 }}>{stats.map(([k, v]) => <View key={k} style={[st.stat, { backgroundColor: p.surface }]}><T kind="eyebrow" style={{ fontSize: 11 }}>{k}</T><T numberOfLines={1} style={{ fontFamily: FONT.displayMed, fontSize: v.length > 8 ? 16 : v.length > 6 ? 19 : 22, fontVariant: ["tabular-nums"] }}>{v}</T></View>)}</Row>}
-          {banner ? <View style={[st.banner, { backgroundColor: p.surface2, borderColor: p.line }]}><Glyph kind="clock" color={p.accent} /><T kind="note" style={{ flex: 1, fontSize: 13 }}>{banner}</T></View> : null}
 
           <View style={{ gap: 10 }}>
             <Row style={{ justifyContent: "space-between" }}><T kind="display" style={{ fontSize: 22 }}>{cfg.listTitle}</T><T kind="eyebrow">{items.length} skip{items.length === 1 ? "" : "s"}</T></Row>
@@ -280,7 +282,6 @@ function Glyph({ kind, color, fill }: { kind: "share" | "eye" | "sliders" | "plu
 const st = StyleSheet.create({
   card: { borderRadius: 18, padding: 14, gap: 10 },
   stat: { flex: 1, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, gap: 2, minWidth: 0 },
-  banner: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderStyle: "dashed", borderRadius: 14, padding: 12 },
   li: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10, borderBottomWidth: 1 },
   ico: { width: 26, height: 26, borderRadius: 13, borderBottomWidth: 2 },
   amtBtn: { minHeight: 44, minWidth: 44, paddingHorizontal: 8, borderRadius: 10, justifyContent: "center", alignItems: "center" },

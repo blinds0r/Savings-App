@@ -69,7 +69,7 @@ export const unitOf = (goal: number, N: number) => { const u = goal / N; return 
 export const countOf = (pct: number, N: number) => (pct > 0 ? Math.max(1, Math.round(pct * N)) : 0);
 export const UNITS: Partial<Record<SkinKey, { n: number; word: string }>> = { galaxy: { n: 150, word: "stars" }, firefly: { n: 300, word: "fireflies" }, tree: { n: 300, word: "leaves" } };
 
-/* ---------- weekly run (calendar weeks, Monday start; step by days so DST never breaks it) ---------- */
+/* ---------- weekly streak (calendar weeks, Monday start; step by days so DST never breaks it) ---------- */
 export function weekStart(d: Date) { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x.getTime(); }
 const prevWeek = (ws: number) => { const d = new Date(ws); d.setDate(d.getDate() - 7); return weekStart(d); };
 export interface Streak { n: number; alive: boolean; daysLeft: number }
@@ -82,10 +82,10 @@ export function streakInfo(items: Item[], now = new Date()): Streak {
   const today = new Date(now); today.setHours(0, 0, 0, 0);
   return { n, alive, daysLeft: Math.round((end.getTime() - today.getTime()) / 864e5) };
 }
-/** The soft reminder: only in the last 3 days of a week with no skip yet, when a run exists. */
+/** The soft reminder: only in the last 3 days of a week with no skip yet, when a streak exists. */
 export const streakBanner = (sk: Streak, on: boolean) =>
   on && sk.n > 0 && !sk.alive && sk.daysLeft <= 3
-    ? `${sk.daysLeft === 1 ? "Today's the last day" : sk.daysLeft + " days left"} to keep your ${sk.n}-week run going. One skip is enough.`
+    ? `${sk.daysLeft === 1 ? "Today's the last day" : sk.daysLeft + " days left"} to keep your ${sk.n}-week streak going. One skip is enough.`
     : "";
 
 /* ---------- months strip ---------- */

@@ -2,6 +2,8 @@ import React, { useRef, useState } from "react";
 import { Platform, View } from "react-native";
 import * as Sharing from "expo-sharing";
 import { captureRef } from "react-native-view-shot";
+import * as Updates from "expo-updates";
+import Constants from "expo-constants";
 import { SKINS, SKIN_KEYS, OVER_NOUN } from "../copy";
 import { amtProblem, fmt, parseAmt, pctOf, pctTxt, r2, UNITS, MAX_AMT } from "../model/logic";
 import type { Ctx, Item, Mode, Settings, SkinKey } from "../model/types";
@@ -108,12 +110,13 @@ export function SettingsSheet({ open, onClose, s, onSave, onRedo }: { open: bool
         <SRow label="Milestones" sub="At 5, 10, 15, 20%, then every 10%" right={<Switch label="Milestones" on={nud.milestones} onChange={(v) => setNud({ ...nud, milestones: v })} />} />
         <SRow label="Nudge me" sub="If I haven't logged in a while" right={<Seg options={[{ v: 3, label: "3 days" }, { v: 4, label: "4 days" }, { v: 7, label: "7 days" }]} value={nud.nudgeDays} onChange={(v) => setNud({ ...nud, nudgeDays: v as 3 | 4 | 7 })} />} />
         <SRow label="Sunday recap" sub="What you skipped this week" right={<Switch label="Sunday recap" on={nud.recap} onChange={(v) => setNud({ ...nud, recap: v })} />} />
-        <SRow label="Weekly run" sub="One skip a week keeps it going, with a heads-up before the week ends" last right={<Switch label="Weekly run" on={nud.streak} onChange={(v) => setNud({ ...nud, streak: v })} />} />
+        <SRow label="Streak" sub="One skip a week keeps it going, with a heads-up before the week ends" last right={<Switch label="Streak" on={nud.streak} onChange={(v) => setNud({ ...nud, streak: v })} />} />
       </Card>
       <T kind="eyebrow">Motion</T>
       <Card style={{ paddingVertical: 4, gap: 0 }}><SRow label="Calmer motion" sub="Skip the animations and just update the picture" last right={<Switch label="Calmer motion" on={calm} onChange={setCalm} />} /></Card>
       <Btn big title="Save" testID="sSave" onPress={() => { const v = parseAmt(amt); if (!(v > 0) || amtProblem(amt, v)) { setErr(amtProblem(amt, v) || "Enter an amount above $0."); return; } const patch: Partial<Settings> = { mode, skin, goalName: name.trim(), motion: calm ? "calm" : "full", nudges: nud }; if (mode === "monthly") patch.monthly = v; else { patch.target = v; if (v !== s.target) patch.ackGoal = 0; } onSave(patch); }} />
       <Btn kind="ghost" big title="Start onboarding again" onPress={onRedo} />
+      <T kind="note" testID="appVersion" style={{ textAlign: "center", paddingTop: 4 }}>{versionLine()}</T>
       <T kind="note" style={{ textAlign: "center" }}>Skipped It · test build</T>
     </Sheet>
   );
@@ -134,4 +137,13 @@ export function PreviewSheet({ open, onClose, ctx, preview, onPreview, onAdd, on
       <View style={{ height: 1, backgroundColor: p.line }} />
     </Sheet>
   );
+}
+
+/* "Version 0.2.0 · update Oct 22, 6:10 PM" so it's easy to check which update a phone is running. */
+function versionLine() {
+  const v = Constants.expoConfig?.version ?? "?";
+  if (Platform.OS === "web") return `Version ${v} · web`;
+  const at = Updates.createdAt;
+  if (Updates.isEmbeddedLaunch || !at) return `Version ${v} · as installed`;
+  return `Version ${v} · update ${at.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${at.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
 }

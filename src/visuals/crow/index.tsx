@@ -54,8 +54,8 @@ function hop(h: number): Hop {
   "worklet";
   if (h < 0 || h >= HOP_D) return { y: 0, sx: 1, sy: 1, wing: 0 };
   if (h < 90) { const k = h / 90; return { y: 4 * k, sx: 1 + 0.05 * k, sy: 1 - 0.09 * k, wing: -6 * k }; }
-  if (h < 300) { const k = (h - 90) / 210, e = 1 - Math.pow(1 - k, 3); return { y: 4 - 18 * e, sx: 1.05 - 0.07 * k, sy: 0.91 + 0.13 * k, wing: -6 - 16 * Math.sin(Math.PI * k) }; }
-  if (h < 460) { const k = (h - 300) / 160; return { y: -14 + 14 * k * k, sx: 0.98 + 0.02 * k, sy: 1.04 - 0.04 * k, wing: -8 * (1 - k) }; }
+  if (h < 300) { const k = (h - 90) / 210, e = 1 - Math.pow(1 - k, 3); return { y: 4 - 26 * e, sx: 1.05 - 0.07 * k, sy: 0.91 + 0.13 * k, wing: -6 - 22 * Math.sin(Math.PI * k) }; }
+  if (h < 460) { const k = (h - 300) / 160; return { y: -22 + 22 * k * k, sx: 0.98 + 0.02 * k, sy: 1.04 - 0.04 * k, wing: -8 * (1 - k) }; }
   const k = (h - 460) / 60, b = Math.sin(Math.PI * k);
   return { y: 0, sx: 1 + 0.04 * b, sy: 1 - 0.07 * b, wing: 0 };
 }

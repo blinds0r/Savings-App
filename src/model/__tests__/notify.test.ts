@@ -29,17 +29,17 @@ describe("reschedule", () => {
     await reschedule([it_("a", "2026-10-10T19:30:00")], DEFAULT_SETTINGS);
     expect(byId("nudge")).toBeUndefined();
   });
-  test("weekly run: nothing logged this week -> this Friday 18:00 with the run length", async () => {
+  test("streak: nothing logged this week -> this Friday 18:00 with the run length", async () => {
     jest.useFakeTimers({ now: new Date(2026, 9, 21, 12) });
     await reschedule([it_("a", "2026-10-14T09:00:00"), it_("b", "2026-10-07T09:00:00")], DEFAULT_SETTINGS);
-    const r = byId("weekly-run")!; expect(r.trigger.date.getTime()).toBe(local(2026, 10, 23, 18)); expect(r.content.title).toMatch(/2-week run/);
+    const r = byId("weekly-run")!; expect(r.trigger.date.getTime()).toBe(local(2026, 10, 23, 18)); expect(r.content.title).toMatch(/2-week streak/);
   });
-  test("weekly run: this week already covered -> next Friday 18:00 (the app may not be opened again before then)", async () => {
+  test("streak: this week already covered -> next Friday 18:00 (the app may not be opened again before then)", async () => {
     jest.useFakeTimers({ now: new Date(2026, 9, 21, 12) });
     await reschedule([it_("c", "2026-10-20T09:00:00"), it_("a", "2026-10-14T09:00:00")], DEFAULT_SETTINGS);
-    const r = byId("weekly-run")!; expect(r).toBeDefined(); expect(r.trigger.date.getTime()).toBe(local(2026, 10, 30, 18)); expect(r.content.title).toMatch(/2-week run/);
+    const r = byId("weekly-run")!; expect(r).toBeDefined(); expect(r.trigger.date.getTime()).toBe(local(2026, 10, 30, 18)); expect(r.content.title).toMatch(/2-week streak/);
   });
-  test("weekly run: no run at all, or already past Friday evening -> nothing", async () => {
+  test("streak: no run at all, or already past Friday evening -> nothing", async () => {
     jest.useFakeTimers({ now: new Date(2026, 9, 21, 12) });
     await reschedule([it_("a", "2026-09-30T09:00:00")], DEFAULT_SETTINGS); expect(byId("weekly-run")).toBeUndefined();
     jest.useFakeTimers({ now: new Date(2026, 9, 24, 12) }); // Sat
