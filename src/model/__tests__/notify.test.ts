@@ -48,7 +48,7 @@ describe("reschedule", () => {
   test("recap: Sunday 19:00 with this week's numbers, only when something was logged this week", async () => {
     jest.useFakeTimers({ now: new Date(2026, 9, 21, 12) });
     await reschedule([it_("a", "2026-10-20T09:00:00", 25), it_("b", "2026-10-19T09:00:00", 5), it_("z", "2026-10-18T23:00:00", 500)], { ...DEFAULT_SETTINGS, target: 1000 });
-    const r = byId("sunday-recap")!; expect(r.trigger.date.getTime()).toBe(local(2026, 10, 25, 19)); expect(r.content.body).toBe("2 skips, $30 saved. $470 to go.");
+    const r = byId("sunday-recap")!; expect(r.trigger.date.getTime()).toBe(local(2026, 10, 25, 19)); expect(r.content.body).toBe("2 saves this week, $30 in all. $470 to go.");
     await reschedule([it_("z", "2026-10-18T23:00:00", 500)], DEFAULT_SETTINGS); expect(byId("sunday-recap")).toBeUndefined();
   });
   test("toggles off remove the notification; each kind is scheduled at most once", async () => {

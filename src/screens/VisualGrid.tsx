@@ -26,7 +26,7 @@ export function VisualSheet({ open, onClose, skin, goal, pct, onPick }: { open: 
       <View style={{ gap: 4 }}>
         <T kind="eyebrow">Your visual</T>
         <T kind="display" style={{ fontSize: 24 }}>Choose how your savings look</T>
-        <T kind="muted">Your skips stay the same; only the picture changes.</T>
+        <T kind="muted">Your saves stay the same; only the picture changes.</T>
       </View>
       <VisualGrid skin={skin} goal={goal} pct={Math.max(0.05, Math.min(pct, 1))} onPick={(k) => { onPick(k); onClose(); }} />
       <View style={{ height: 4 }} />

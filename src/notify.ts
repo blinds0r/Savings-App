@@ -33,7 +33,7 @@ export async function reschedule(items: Item[], s: Settings) {
     // Nudge: N quiet days after the last skip (or after today if nothing logged yet), at 10:00.
     if (s.nudges.nudgeDays) {
       const base = last || now; const d = at(base, 10); d.setDate(d.getDate() + s.nudges.nudgeDays);
-      if (d > now) await Notifications.scheduleNotificationAsync({ identifier: IDS.nudge, content: { title: "Skipped anything lately?", body: "Even a $4 coffee counts. Two taps and it's in." }, trigger: { type: SchedulableTriggerInputTypes.DATE, date: d } });
+      if (d > now) await Notifications.scheduleNotificationAsync({ identifier: IDS.nudge, content: { title: "Skipped or saved anything lately?", body: "A $4 coffee you passed on or $20 set aside both count. Two taps and it's in." }, trigger: { type: SchedulableTriggerInputTypes.DATE, date: d } });
     }
     // Streak: a heads-up on Friday evening of the first week that has no skip yet. When this week is already
     // covered that is next week's Friday (the schedule is only refreshed when the app opens or a skip is logged, so
@@ -42,7 +42,7 @@ export async function reschedule(items: Item[], s: Settings) {
       const sk = streakInfo(items, now);
       if (sk.n > 0) {
         const fri = new Date(weekStart(now)); fri.setDate(fri.getDate() + (sk.alive ? 11 : 4)); const d = at(fri, 18);
-        if (d > now) await Notifications.scheduleNotificationAsync({ identifier: IDS.run, content: { title: `Your ${sk.n}-week streak ends Sunday`, body: "One skip this weekend keeps it going." }, trigger: { type: SchedulableTriggerInputTypes.DATE, date: d } });
+        if (d > now) await Notifications.scheduleNotificationAsync({ identifier: IDS.run, content: { title: `Your ${sk.n}-week streak ends Sunday`, body: "One skip or save this weekend keeps it going." }, trigger: { type: SchedulableTriggerInputTypes.DATE, date: d } });
       }
     }
     // Sunday recap at 19:00 with this week's numbers so far.
@@ -50,7 +50,7 @@ export async function reschedule(items: Item[], s: Settings) {
       const ws = weekStart(now), thisWeek = items.filter((i) => dateOf(i.at).getTime() >= ws);
       const sun = new Date(ws); sun.setDate(sun.getDate() + 6); const d = at(sun, 19);
       const tot = thisWeek.reduce((a, i) => a + i.amount, 0);
-      if (d > now && thisWeek.length) await Notifications.scheduleNotificationAsync({ identifier: IDS.recap, content: { title: "Your week, skipped", body: `${thisWeek.length} skip${thisWeek.length === 1 ? "" : "s"}, ${fmt(tot)} saved. ${fmt(Math.max(c.goal - c.t, 0))} to go.` }, trigger: { type: SchedulableTriggerInputTypes.DATE, date: d } });
+      if (d > now && thisWeek.length) await Notifications.scheduleNotificationAsync({ identifier: IDS.recap, content: { title: "Your week in saves", body: `${thisWeek.length} save${thisWeek.length === 1 ? "" : "s"} this week, ${fmt(tot)} in all. ${fmt(Math.max(c.goal - c.t, 0))} to go.` }, trigger: { type: SchedulableTriggerInputTypes.DATE, date: d } });
     }
   } catch {}
 }

@@ -34,7 +34,7 @@ export function Onboarding({ initial, onDone }: { initial: Settings; onDone: (s:
             <View style={{ gap: 8 }}>
               <T kind="eyebrow">Step 1 · Your goal</T>
               <T kind="display" style={{ fontSize: 34, lineHeight: 36 }}>How do you want to save?</T>
-              <T kind="muted">Every time you skip something you were about to buy, that money lands here instead.</T>
+              <T kind="muted">Skip something you were about to buy, or set money aside on purpose. Either way, it lands here.</T>
             </View>
             <View style={{ flexDirection: "row", gap: 10 }}>
               {([["target", "Toward a target", "One pile that grows until you reach it."], ["monthly", "A monthly goal", "A fresh pile every month. Beat it and the extra piles up beside it."]] as const).map(([v, t, d]) => (
@@ -60,7 +60,7 @@ export function Onboarding({ initial, onDone }: { initial: Settings; onDone: (s:
             <View style={{ gap: 8 }}>
               <T kind="eyebrow">Step 2 · Your visual</T>
               <T kind="display" style={{ fontSize: 34, lineHeight: 36 }}>Choose how your savings look</T>
-              <T kind="muted">Each skip adds to the picture. Change it anytime from the home screen.</T>
+              <T kind="muted">Every skip or save adds to the picture. Change it anytime from the home screen.</T>
             </View>
             <VisualGrid skin={skin} goal={goal} onPick={setSkin} />
             <Row><Btn kind="ghost" title="Back" onPress={() => setStep(1)} /><Btn big title="Start saving" testID="onbDone" style={{ flex: 1 }} onPress={() => onDone({ onboarded: true, mode, target: m ? initial.target : amt, monthly: m ? amt : initial.monthly, goalName: name.trim(), skin, ackGoal: 0 })} /></Row>

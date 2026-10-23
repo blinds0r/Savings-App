@@ -85,7 +85,7 @@ export function streakInfo(items: Item[], now = new Date()): Streak {
 /** The soft reminder: only in the last 3 days of a week with no skip yet, when a streak exists. */
 export const streakBanner = (sk: Streak, on: boolean) =>
   on && sk.n > 0 && !sk.alive && sk.daysLeft <= 3
-    ? `${sk.daysLeft === 1 ? "Today's the last day" : sk.daysLeft + " days left"} to keep your ${sk.n}-week streak going. One skip is enough.`
+    ? `${sk.daysLeft === 1 ? "Today's the last day" : sk.daysLeft + " days left"} to keep your ${sk.n}-week streak going. One skip or save is enough.`
     : "";
 
 /* ---------- months strip ---------- */

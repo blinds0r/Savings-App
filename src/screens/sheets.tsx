@@ -25,7 +25,7 @@ export function SkipSheet({ open, onClose, title, btn, item, ctx, skin, pending,
   return (
     <Sheet open={open} onClose={onClose} label={title}>
       <T kind="display" style={{ fontSize: 26 }}>{title}</T>
-      <Field label="What was it?"><Input testID="lw" value={what} onChangeText={setWhat} maxLength={80} autoFocus={!item} placeholder="Coffee, a cab, that thing in the cart…" returnKeyType="next" /></Field>
+      <Field label="What was it?"><Input testID="lw" value={what} onChangeText={setWhat} maxLength={80} autoFocus={!item} placeholder="Skipped a cab, or $50 into savings…" returnKeyType="next" /></Field>
       <Field label="How much"><BigAmount testID="la" value={amt} onChange={setAmt} onSubmit={submit} /><T kind="semi" style={{ color: p.accent, fontSize: 14, minHeight: 20 }}>{fb}</T></Field>
       <Btn big testID="lgo" title={ok ? `${btn} · ${item ? "" : "+"}${fmt(a)}` : btn} disabled={!ok} onPress={submit} />
     </Sheet>
@@ -36,7 +36,7 @@ export function SkipSheet({ open, onClose, title, btn, item, ctx, skin, pending,
 export function ShareSheet({ open, onClose, ctx, s, skin, count, pct }: { open: boolean; onClose: () => void; ctx: Ctx; s: Settings; skin: SkinKey; count: number; pct: number | null }) {
   const p = useTheme(); const cardRef = useRef<any>(null); const [busy, setBusy] = useState(false); const [note, setNote] = useState("");
   const monthly = s.mode === "monthly", cfg = SKINS[skin];
-  const text = monthly ? `I've skipped my way to ${fmt(ctx.raw)} this month (${pctTxt(ctx.pct)} of my ${fmt(ctx.goal)} goal) on Skipped It.` : `I've skipped my way to ${fmt(ctx.raw)} of ${fmt(ctx.goal)} (${pctTxt(ctx.pct)}) on Skipped It.`;
+  const text = monthly ? `I've skipped and saved my way to ${fmt(ctx.raw)} this month (${pctTxt(ctx.pct)} of my ${fmt(ctx.goal)} goal) on Skipped It.` : `I've skipped and saved my way to ${fmt(ctx.raw)} of ${fmt(ctx.goal)} (${pctTxt(ctx.pct)}) on Skipped It.`;
   const share = async () => {
     setBusy(true); setNote("");
     try {
@@ -51,7 +51,7 @@ export function ShareSheet({ open, onClose, ctx, s, skin, count, pct }: { open: 
       <View ref={cardRef} collapsable={false} style={{ borderRadius: 18, padding: 18, backgroundColor: p.surface2, borderWidth: 1, borderColor: p.line, gap: 6 }}>
         <T kind="eyebrow" style={{ fontSize: 11 }}>{pct ? `${pct}% ${cfg.word}` : "Skipped It"}{s.goalName ? ` · ${s.goalName}` : ""}</T>
         <T kind="display" style={{ fontSize: 44, lineHeight: 48 }}>{fmt(ctx.raw)}</T>
-        <T>saved by skipping {count} thing{count === 1 ? "" : "s"}{monthly ? " this month" : ""}</T>
+        <T>from {count} skip{count === 1 ? "" : "s"} and save{count === 1 ? "" : "s"}{monthly ? " this month" : ""}</T>
         <T kind="eyebrow" style={{ fontSize: 11 }}>{cfg.name} · {pctTxt(ctx.pct)}</T>
       </View>
       <T kind="note">Opens your phone{"'"}s share sheet with this card as a picture, so WhatsApp is one tap away.</T>
@@ -109,8 +109,8 @@ export function SettingsSheet({ open, onClose, s, onSave, onRedo }: { open: bool
       <Card style={{ paddingVertical: 4, gap: 0 }}>
         <SRow label="Milestones" sub="At 5, 10, 15, 20%, then every 10%" right={<Switch label="Milestones" on={nud.milestones} onChange={(v) => setNud({ ...nud, milestones: v })} />} />
         <SRow label="Nudge me" sub="If I haven't logged in a while" right={<Seg options={[{ v: 3, label: "3 days" }, { v: 4, label: "4 days" }, { v: 7, label: "7 days" }]} value={nud.nudgeDays} onChange={(v) => setNud({ ...nud, nudgeDays: v as 3 | 4 | 7 })} />} />
-        <SRow label="Sunday recap" sub="What you skipped this week" right={<Switch label="Sunday recap" on={nud.recap} onChange={(v) => setNud({ ...nud, recap: v })} />} />
-        <SRow label="Streak" sub="One skip a week keeps it going, with a heads-up before the week ends" last right={<Switch label="Streak" on={nud.streak} onChange={(v) => setNud({ ...nud, streak: v })} />} />
+        <SRow label="Sunday recap" sub="What you skipped and saved this week" right={<Switch label="Sunday recap" on={nud.recap} onChange={(v) => setNud({ ...nud, recap: v })} />} />
+        <SRow label="Streak" sub="One skip or save a week keeps it going, with a heads-up before the week ends" last right={<Switch label="Streak" on={nud.streak} onChange={(v) => setNud({ ...nud, streak: v })} />} />
       </Card>
       <T kind="eyebrow">Motion</T>
       <Card style={{ paddingVertical: 4, gap: 0 }}><SRow label="Calmer motion" sub="Skip the animations and just update the picture" last right={<Switch label="Calmer motion" on={calm} onChange={setCalm} />} /></Card>

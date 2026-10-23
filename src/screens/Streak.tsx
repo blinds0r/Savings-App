@@ -16,9 +16,9 @@ export function StreakRow({ sk, onLog }: { sk: Streak; onLog: () => void }) {
   const pastCount = Math.min(sk.alive ? Math.max(total - 1, 0) : total, MAX_PAST);
   const starting = !sk.alive && sk.n === 0;
   const label = starting ? "Start a streak" : `${total}-week streak`;
-  const note = sk.alive ? "this week done" : starting ? "one skip this week" : sk.daysLeft <= 1 ? "last day" : `${sk.daysLeft} days left`;
+  const note = sk.alive ? "this week done" : starting ? "one skip or save this week" : sk.daysLeft <= 1 ? "last day" : `${sk.daysLeft} days left`;
   const atRisk = !sk.alive && !starting;
-  const a11y = sk.alive ? `${total}-week streak. This week is done.` : starting ? "No streak yet. Log a skip this week to start one." : `${total}-week streak. ${note} to keep it. Tap to log a skip.`;
+  const a11y = sk.alive ? `${total}-week streak. This week is done.` : starting ? "No streak yet. Log a skip or save this week to start one." : `${total}-week streak. ${note} to keep it. Tap to log one.`;
   const past = Array.from({ length: pastCount }, (_, i) => 0.45 + (0.55 * (i + 1)) / Math.max(pastCount, 1));
   const body = (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10, minHeight: 28 }}>

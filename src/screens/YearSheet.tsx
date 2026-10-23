@@ -83,7 +83,7 @@ export function YearSheet({ open, onClose, items, s, onShare }: { open: boolean;
       <View style={{ gap: 2 }} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
         <T kind="eyebrow">{y.count ? "Your year so far" : "Your year"}</T>
         <T kind="display" testID="yearTotal" style={{ fontSize: 48, lineHeight: 52, fontVariant: ["tabular-nums"] }}>{fmt(y.total)}</T>
-        <T kind="muted">{y.count ? `not spent since ${y.since} · ${y.count} skip${y.count === 1 ? "" : "s"}` : "Nothing logged yet. Your first skip starts the count."}</T>
+        <T kind="muted">{y.count ? `saved since ${y.since} · ${y.count} save${y.count === 1 ? "" : "s"}` : "Nothing logged yet. Your first skip or save starts the count."}</T>
         {!monthly && s.bankedGoals > 0 ? <T kind="note">Includes {fmt(s.banked)} banked from {s.bankedGoals === 1 ? "one finished goal" : `${s.bankedGoals} finished goals`}</T> : null}
       </View>
 
@@ -106,7 +106,7 @@ export function YearSheet({ open, onClose, items, s, onShare }: { open: boolean;
 
       {y.top.length ? (
         <View>
-          <T kind="display" style={{ fontSize: 18, lineHeight: 22, paddingBottom: 2 }}>Biggest skips</T>
+          <T kind="display" style={{ fontSize: 18, lineHeight: 22, paddingBottom: 2 }}>Biggest saves</T>
           {y.top.map((it) => (
             <View key={it.id} style={[st.row, { borderBottomColor: p.line }]}>
               <View style={{ flex: 1, minWidth: 0 }}><T kind="semi" numberOfLines={1}>{it.what || "Something"}</T><T kind="note">{day(it.at)}</T></View>
@@ -118,8 +118,8 @@ export function YearSheet({ open, onClose, items, s, onShare }: { open: boolean;
 
       {y.count ? (
         <Row style={{ gap: 6 }}>
-          {y.weekday ? <View style={[st.pair, { backgroundColor: p.surface }]}><T kind="note" style={{ fontSize: 12 }}>You skip most on</T><T kind="bold">{y.weekday.name} · {y.weekday.n} of {y.count}</T></View> : null}
-          <View style={[st.pair, { backgroundColor: p.surface }]}><T kind="note" style={{ fontSize: 12 }}>Typical skip</T><T kind="bold">{fmt(y.typical)}</T></View>
+          {y.weekday ? <View style={[st.pair, { backgroundColor: p.surface }]}><T kind="note" style={{ fontSize: 12 }}>You save most on</T><T kind="bold">{y.weekday.name} · {y.weekday.n} of {y.count}</T></View> : null}
+          <View style={[st.pair, { backgroundColor: p.surface }]}><T kind="note" style={{ fontSize: 12 }}>Typical save</T><T kind="bold">{fmt(y.typical)}</T></View>
         </Row>
       ) : null}
 

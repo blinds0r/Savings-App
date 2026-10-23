@@ -133,12 +133,12 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
   const sk = streakInfo(items, now);
   const avg = items.length ? fmt(r2(ctx.total / items.length)) : "–";
   const stats: [string, string][] = s.skin === "summit"
-    ? (() => { const nc = CAMPS.find((f) => f > ctx.pct + 1e-9); return [["Skips", String(items.length)], ["Next camp", nc ? (nc === 1 ? "Summit" : fmt(Math.ceil(nc * ctx.goal))) : "Done"], ["To go", nc ? `${int((nc - ctx.pct) * 3000)} m` : "0 m"]] as [string, string][]; })()
-    : s.skin === "galaxy" ? [["Stars", `${countOf(ctx.pct, 150)} / 150`], ["Skips", String(items.length)], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]]
-    : s.skin === "firefly" || s.skin === "tree" ? [[s.skin === "tree" ? "Leaves" : "Caught", `${countOf(ctx.pct, 300)} / 300`], ["Skips", String(items.length)], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]]
-    : [[s.skin === "crow" ? "Finds" : "Skips", String(items.length)], ["Average", avg], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]];
+    ? (() => { const nc = CAMPS.find((f) => f > ctx.pct + 1e-9); return [["Saves", String(items.length)], ["Next camp", nc ? (nc === 1 ? "Summit" : fmt(Math.ceil(nc * ctx.goal))) : "Done"], ["To go", nc ? `${int((nc - ctx.pct) * 3000)} m` : "0 m"]] as [string, string][]; })()
+    : s.skin === "galaxy" ? [["Stars", `${countOf(ctx.pct, 150)} / 150`], ["Saves", String(items.length)], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]]
+    : s.skin === "firefly" || s.skin === "tree" ? [[s.skin === "tree" ? "Leaves" : "Caught", `${countOf(ctx.pct, 300)} / 300`], ["Saves", String(items.length)], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]]
+    : [[s.skin === "crow" ? "Finds" : "Saves", String(items.length)], ["Average", avg], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]];
   // monthly mode: three slim tiles above the visual instead of the stats row (skips this month, to go, all time); the streak sits at the top
-  const tileFirst: [string, string] = ["Skips", String(items.filter((i) => monthKey(i.at) === nowKey(now)).length)];
+  const tileFirst: [string, string] = ["Saves", String(items.filter((i) => monthKey(i.at) === nowKey(now)).length)];
   const tileSecond: [string, string] = ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))];
   const allTime = r2(items.reduce((a, i) => a + (Number(i.amount) || 0), 0));
   const strip = monthly ? monthsStrip(items, ctx.goal, ctx.raw) : null;
@@ -218,9 +218,9 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
           {monthly ? null : <Row style={{ gap: 10 }}>{stats.map(([k, v]) => <View key={k} style={[st.stat, { backgroundColor: p.surface }]}><T kind="eyebrow" style={{ fontSize: 11 }}>{k}</T><T numberOfLines={1} style={{ fontFamily: FONT.displayMed, fontSize: v.length > 8 ? 16 : v.length > 6 ? 19 : 22, fontVariant: ["tabular-nums"] }}>{v}</T></View>)}</Row>}
 
           <View style={{ gap: 10 }}>
-            <Row style={{ justifyContent: "space-between" }}><T kind="display" style={{ fontSize: 22 }}>{cfg.listTitle}</T><T kind="eyebrow">{items.length} skip{items.length === 1 ? "" : "s"}</T></Row>
+            <Row style={{ justifyContent: "space-between" }}><T kind="display" style={{ fontSize: 22 }}>{cfg.listTitle}</T><T kind="eyebrow">{items.length} save{items.length === 1 ? "" : "s"}</T></Row>
             <View style={{ borderTopWidth: 1, borderTopColor: p.line }}>
-              {!items.length ? <T kind="muted" style={{ paddingVertical: 16 }}>Nothing yet. Add the first thing you skipped.</T> : null}
+              {!items.length ? <T kind="muted" style={{ paddingVertical: 16 }}>Nothing yet. Add the first thing you skipped or saved.</T> : null}
               {items.map((it, i) => {
                 const bankedRow = !monthly && !!s.pileStart && it.at < s.pileStart;
                 const sep = monthly ? ((i === 0 || (monthKey(items[i - 1].at) === nowKey()) !== (monthKey(it.at) === nowKey())) ? (monthKey(it.at) === nowKey() ? "This month" : "Earlier") : null)
@@ -248,8 +248,8 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
         <View style={[st.fab, { bottom: ins.bottom + 18 }]}><Btn big testID="logBtn" title={cfg.btn} icon={<Glyph kind="plus" color={p.btnFg} />} onPress={() => { setEditing(null); setSheet("log"); }} style={st.fabBtn} /></View>
         <Toast msg={toast} />
 
-        <SkipSheet key={`log-${sheetGen}`} open={sheet === "log"} onClose={closeSheet} title="What did you skip?" btn={cfg.btn} ctx={ctx} skin={s.skin} pending={pending} onSubmit={logSkip} />
-        <SkipSheet key={`edit-${sheetGen}`} open={sheet === "edit"} onClose={closeSheet} title="Edit this skip" btn="Save" item={editing} ctx={ctx} skin={s.skin} pending={0} onSubmit={saveEdit} />
+        <SkipSheet key={`log-${sheetGen}`} open={sheet === "log"} onClose={closeSheet} title="Skip or save" btn={cfg.btn} ctx={ctx} skin={s.skin} pending={pending} onSubmit={logSkip} />
+        <SkipSheet key={`edit-${sheetGen}`} open={sheet === "edit"} onClose={closeSheet} title="Edit this entry" btn="Save" item={editing} ctx={ctx} skin={s.skin} pending={0} onSubmit={saveEdit} />
         <YearSheet open={sheet === "year"} onClose={closeSheet} items={items} s={s} onShare={() => { setSharePct(null); setSheet("share"); }} />
         <VisualSheet open={sheet === "visual"} onClose={closeSheet} skin={s.skin} goal={ctx.goal} pct={ctx.pct} onPick={(k) => { if (busy.current) interrupt(); store.saveSettings({ skin: k }); }} />
         <SettingsSheet key={`set-${sheetGen}`} open={sheet === "settings"} onClose={closeSheet} s={s} onSave={(patch) => { setSheet(null); store.saveSettings(patch); showToast("Saved"); }} onRedo={() => { setSheet(null); store.saveSettings({ onboarded: false }); }} />
