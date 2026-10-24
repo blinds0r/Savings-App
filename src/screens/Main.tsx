@@ -17,7 +17,7 @@ import { reschedule, setupNotifications } from "../notify";
 import { FONT, PALETTES, SCENES } from "../theme";
 import { Btn, Chip, IconBtn, Row, T, ThemeCtx, Toast, useTheme } from "../ui";
 import { VisualSheet } from "./VisualGrid";
-import { Ladder } from "./Ladder";
+import { GoalTile } from "./GoalTile";
 import { TopTiles, YearSheet } from "./YearSheet";
 import { StreakRow } from "./Streak";
 import { VISUALS } from "../visuals";
@@ -134,9 +134,10 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
   const avg = items.length ? fmt(r2(ctx.total / items.length)) : "–";
   const stats: [string, string][] = s.skin === "summit"
     ? (() => { const nc = CAMPS.find((f) => f > ctx.pct + 1e-9); return [["Saves", String(items.length)], ["Next camp", nc ? (nc === 1 ? "Summit" : fmt(Math.ceil(nc * ctx.goal))) : "Done"], ["To go", nc ? `${int((nc - ctx.pct) * 3000)} m` : "0 m"]] as [string, string][]; })()
-    : s.skin === "galaxy" ? [["Stars", `${countOf(ctx.pct, 150)} / 150`], ["Saves", String(items.length)], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]]
-    : s.skin === "firefly" || s.skin === "tree" ? [[s.skin === "tree" ? "Leaves" : "Caught", `${countOf(ctx.pct, 300)} / 300`], ["Saves", String(items.length)], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]]
-    : [[s.skin === "crow" ? "Finds" : "Saves", String(items.length)], ["Average", avg], ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))]];
+    : s.skin === "galaxy" ? [["Stars", `${countOf(ctx.pct, 150)} / 150`], ["Saves", String(items.length)], ["Average", avg]]
+    : s.skin === "firefly" || s.skin === "tree" ? [[s.skin === "tree" ? "Leaves" : "Caught", `${countOf(ctx.pct, 300)} / 300`], ["Saves", String(items.length)], ["Average", avg]]
+    // "To go" now lives in the goal tile at the top
+    : [[s.skin === "crow" ? "Finds" : "Saves", String(items.length)], ["Average", avg], ["Biggest", items.length ? fmt(Math.max(...items.map((i) => Number(i.amount) || 0))) : "–"]];
   // monthly mode: three slim tiles above the visual instead of the stats row (skips this month, to go, all time); the streak sits at the top
   const tileFirst: [string, string] = ["Saves", String(items.filter((i) => monthKey(i.at) === nowKey(now)).length)];
   const tileSecond: [string, string] = ["To go", fmt(r2(Math.max(ctx.goal - ctx.t, 0)))];
@@ -150,16 +151,19 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
       <StatusBar barStyle={p.dark ? "light-content" : "dark-content"} />
       <View style={{ flex: 1, backgroundColor: p.bg }}>
         <ScrollView contentContainerStyle={{ paddingTop: ins.top + 12, paddingBottom: ins.bottom + 110, paddingHorizontal: 16, gap: 20 }}>
-          <View style={{ gap: 4 }}>
+          <View style={{ gap: monthly ? 4 : 16 }}>
           <Row style={{ justifyContent: "space-between" }}>
-            <T kind="eyebrow" style={{ flex: 1 }} numberOfLines={2}>{monthly ? `${s.goalName ? s.goalName + " · " : ""}${monthName(nowKey(), true)} · ${fmt(ctx.goal)} a month` : `${s.goalName || cfg.eyebrow(ctx.goal)} · goal ${fmt(ctx.goal)}`}</T>
+            {monthly
+              ? <T kind="eyebrow" style={{ flex: 1 }} numberOfLines={2}>{`${s.goalName ? s.goalName + " · " : ""}${monthName(nowKey(), true)} · ${fmt(ctx.goal)} a month`}</T>
+              : <View style={{ flex: 1, minWidth: 0 }}>{s.nudges.streak && preview == null ? <StreakRow compact sk={sk} onLog={() => { setEditing(null); setSheet("log"); }} /> : null}</View>}
             <Row style={{ gap: 6 }}>
               <IconBtn label="Share progress" testID="shareBtn" onPress={() => { setSharePct(null); setSheet("share"); }}><Glyph kind="share" color={p.fg} /></IconBtn>
               <IconBtn label="Preview tools" testID="pvBtn" onPress={() => { if (busy.current) interrupt(); setSheet("preview"); }}><Glyph kind="eye" color={p.fg} /></IconBtn>
               <IconBtn label="Settings" testID="setBtn" onPress={() => setSheet("settings")}><Glyph kind="sliders" color={p.fg} /></IconBtn>
             </Row>
           </Row>
-          {s.nudges.streak && preview == null ? <StreakRow sk={sk} onLog={() => { setEditing(null); setSheet("log"); }} /> : null}
+          {monthly && s.nudges.streak && preview == null ? <StreakRow sk={sk} onLog={() => { setEditing(null); setSheet("log"); }} /> : null}
+          {monthly ? null : <GoalTile name={s.goalName || "Your goal"} goal={ctx.goal} t={ctx.t} pct={ctx.pct} surplus={ctx.surplus} />}
           </View>
           <View style={{ gap: 6 }}>
             <Row style={{ justifyContent: "space-between", alignItems: "center", gap: 10 }}>
@@ -178,7 +182,6 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
           <View style={{ marginHorizontal: -16, backgroundColor: page, paddingVertical: scene ? 0 : 0 }}>
             <View style={{ alignSelf: "center", width: stageW, height: stageH }}>
               <V.Scene ref={sceneRef} state={vState} width={stageW} height={stageH} motion={motion} background={scene} />
-              <Ladder testID="ladder" skin={s.skin} pct={vState.pct} goal={ctx.goal} height={stageH} side={s.skin === "summit" ? "right" : "left"} />
             </View>
             {cele ? (
               <View style={[st.cele, { backgroundColor: p.surface, borderColor: p.line }]} accessibilityLiveRegion="polite">
