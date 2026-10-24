@@ -1,6 +1,6 @@
 /* Crow's hoard: a crow guarding an open treasure chest (port of the prototype's visuals/crow.js).
  * Chosen options: idle "Admiring", add "Arc away" (realistic flight), milestone "Victory caw + crown",
- * background "Dusty attic" (backgrounds/crow.js [3]). The crow herself is the "Glossy, softer" redesign (A2). */
+ * background "Dusty attic" (backgrounds/crow.js [3]). The crow herself is the "Glossy, softer" redesign, leaner and cuter (L2). */
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { Atlas, Canvas, Circle, Group, LinearGradient, Oval, Path, Picture, Rect, RoundedRect, Skia, PaintStyle, StrokeCap, TileMode, Text, createPicture, useColorBuffer, useFont, useRSXformBuffer, vec, type SkCanvas, type SkFont, type SkPicture, type SkRect } from "@shopify/react-native-skia";
 import { cancelAnimation, runOnJS, useDerivedValue, useFrameCallback, useSharedValue, withTiming, Easing, type SharedValue , ReduceMotion } from "react-native-reanimated";
@@ -36,7 +36,10 @@ function newSpots(s: VisualState, k: number): Coin[] {
   while (fresh.length < k) fresh.push({ x: 110 + Math.random() * 130, y: 166 + Math.random() * 6, r: 8, sq: 0.5, rot: 0 });
   return fresh.slice(0, k);
 }
-const BEAK = { x: 229, y: 98 };
+const BEAK = { x: 225, y: 97 };
+/** L2 proportions: body slimmed about the feet, head scaled up about the neck. */
+const LEAN = [{ translateX: 287 }, { translateY: 146 }, { scaleX: 0.86 }, { scaleY: 0.82 }, { translateX: -287 }, { translateY: -146 }];
+const HEAD_UP = [{ translateX: 262 }, { translateY: 100 }, { scale: 1.1 }, { translateX: -262 }, { translateY: -100 }];
 
 /* ---------- idle schedules ---------- */
 const PEEK = intervals(7, 8, 3, 5), BLINK = intervals(8, 7, 2.8, 5.2);
@@ -186,8 +189,8 @@ function useStatics() {
       lockT: P("M171.5 264 L174.5 264 L175.5 272 L170.5 272 Z"), seam: P("M62 265 H284"), trimL: P("M51 150 V272 M295 150 V272"),
       // the crow: "Glossy, softer" (A2) — one smooth body, layered wing, small fine beak, lashes and a plum sheen
       tail: P("M304 122 L343 129 L340 134 L345 138 L339 141 L342 145 L302 138 Z"),
-      body: P("M250 99 C245 119 255 139 277 145 C293 149 307 141 313 129 C318 112 305 96 285 94 C270 93 256 94 250 99 Z"),
-      sheen: P("M268 97 C289 92 308 101 313 117 C300 105 285 100 268 101 Z"),
+      body: P("M250 99 C245 119 255 139 277 145 C293 149 307 141 313 129 C318 110 307 89 287 88 C272 87.5 257 92 250 99 Z"),
+      sheen: P("M258 96 C282 86 310 97 314 117 C301 104 284 98 258 101 Z"),
       chest: P("M256 116 q4 3 8 1 M258 126 q4 3 8 1 M263 135 q4 3 8 1"),
       wing: P("M270 108 C290 97 316 104 329 127 C318 133 299 133 276 126 C269 122 267 114 270 108 Z"),
       wingHi: P("M275 110 C289 104 304 107 312 116 C300 116 287 117 276 118 Z"),
@@ -365,7 +368,7 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function CrowScene({ state, wi
   const carryGemTr = useDerivedValue(() => (addMs.value >= T_BACK && addMs.value < T_DROP && carryGem.value ? [{ translateX: BEAK.x }, { translateY: BEAK.y + 2 }] : OFF));
   const crownTr = useDerivedValue(() => {
     const p = clamp((msMs.value - CROWN_AT) / CROWN_D, 0, 1), e = easeOut(p), o = [0, 0.6, 0.76, 1];
-    return [{ translateX: 258 }, { translateY: 80 }, { scale: 1.55 }, { translateY: kf(e, o, [-110, 0, -8, 0]) }, { rotate: rad(kf(e, o, [-30, 6, -4, 0])) }];
+    return [{ translateX: 257 }, { translateY: 77 }, { scale: 1.55 }, { translateY: kf(e, o, [-110, 0, -8, 0]) }, { rotate: rad(kf(e, o, [-30, 6, -4, 0])) }];
   });
   const crownO = useDerivedValue(() => { if (msMs.value < CROWN_AT) return 0; const p = clamp((msMs.value - CROWN_AT) / CROWN_D, 0, 1); return kf(easeOut(p), [0, 0.2, 1], [0, 1, 1]); });
   const lidTr = useDerivedValue(() => {
@@ -451,40 +454,46 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function CrowScene({ state, wi
         </Path>
         {/* the crow */}
         <Group transform={crowTr}>
-          <Path path={S.tail} color="#17151D" />
-          <Path path={S.body}>
-            <LinearGradient start={vec(0, 93)} end={vec(0, 148)} colors={["#2C2838", "#15131B"]} />
-          </Path>
-          <Path path={S.sheen}>
-            <LinearGradient start={vec(268, 92)} end={vec(313, 117)} colors={["rgba(164,123,192,0.55)", "rgba(75,127,168,0)"]} />
-          </Path>
-          <Path path={S.chest} color="#38334A" style="stroke" strokeWidth={1.2} strokeCap="round" />
-          <Group origin={vec(276, 112)} transform={wingTr}>
-            <Path path={S.wing} color="#2B2736" />
-            <Path path={S.wingHi} color="#363145" />
-            <Path path={S.wingP} color="#1A1822" style="stroke" strokeWidth={1.3} strokeCap="round" />
-            <Path path={S.wingC} color="#4A4460" style="stroke" strokeWidth={1.1} />
+          {/* L2 "leaner and cuter": the body is slimmed toward the feet, the head drawn 10% bigger */}
+          <Group transform={LEAN}>
+            <Path path={S.tail} color="#17151D" />
+            <Path path={S.body}>
+              <LinearGradient start={vec(0, 88)} end={vec(0, 148)} colors={["#2C2838", "#15131B"]} />
+            </Path>
+            <Path path={S.sheen}>
+              <LinearGradient start={vec(258, 86)} end={vec(314, 117)} colors={["rgba(164,123,192,0.55)", "rgba(75,127,168,0)"]} />
+            </Path>
+            <Path path={S.chest} color="#38334A" style="stroke" strokeWidth={1.2} strokeCap="round" />
+            <Group origin={vec(276, 112)} transform={wingTr}>
+              <Path path={S.wing} color="#2B2736" />
+              <Path path={S.wingHi} color="#363145" />
+              <Path path={S.wingP} color="#1A1822" style="stroke" strokeWidth={1.3} strokeCap="round" />
+              <Path path={S.wingC} color="#4A4460" style="stroke" strokeWidth={1.1} />
+            </Group>
           </Group>
           <Group origin={vec(287, 143)} transform={legsTr}>
-            <Path path={S.legs} color="#2F2C36" style="stroke" strokeWidth={3} strokeCap="round" />
+            <Path path={S.legs} color="#2F2C36" style="stroke" strokeWidth={2.6} strokeCap="round" />
             <Path path={S.toes} color="#2F2C36" style="stroke" strokeWidth={2.4} strokeCap="round" />
           </Group>
           <Group origin={vec(263.2, 106.8)} transform={headTr}>
-            <Path path={S.beak} color="#2E2B35" />
-            <Circle cx={257.5} cy={92} r={15.5} color="#1D1B24" />
-            <Path path={S.crestHi} color="#A47BC0" style="stroke" strokeWidth={2.2} strokeCap="round" opacity={0.6} />
-            <Path path={S.beakHi} color="#5E5770" style="stroke" strokeWidth={1.1} strokeCap="round" />
-            <Path path={S.beakL} color="#121016" style="stroke" strokeWidth={0.9} />
-            <Path path={S.bristles} color="#1D1B24" style="stroke" strokeWidth={1.4} strokeCap="round" />
-            <Oval x={257.5} y={97.2} width={8} height={4.6} color="#E594B4" opacity={0.4} />
-            <Group origin={vec(254.5, 88.4)} transform={eyeTr}>
-              <Circle cx={254.5} cy={88.4} r={4.1} color="#120F16" />
-              <Circle cx={254.5} cy={88.4} r={4.1} color="#423B52" style="stroke" strokeWidth={0.9} />
-              <Circle cx={253.1} cy={87} r={1.4} color="#FFFFFF" />
-              <Circle cx={255.9} cy={90} r={0.6} color="#FFFFFF" />
+            <Group transform={HEAD_UP}>
+              <Path path={S.beak} color="#2E2B35" />
+              <Circle cx={257.5} cy={92} r={15.5} color="#1D1B24" />
+              <Path path={S.crestHi} color="#A47BC0" style="stroke" strokeWidth={2.2} strokeCap="round" opacity={0.6} />
+              <Path path={S.beakHi} color="#5E5770" style="stroke" strokeWidth={1.1} strokeCap="round" />
+              <Path path={S.beakL} color="#121016" style="stroke" strokeWidth={0.9} />
+              <Path path={S.bristles} color="#1D1B24" style="stroke" strokeWidth={1.4} strokeCap="round" />
+              <Oval x={257.5} y={97.2} width={8} height={4.6} color="#E594B4" opacity={0.4} />
+              {/* the dark eye with catchlights, ringed in gold */}
+              <Group origin={vec(254.5, 88.4)} transform={eyeTr}>
+                <Circle cx={254.5} cy={88.4} r={4.6} color="#120F16" />
+                <Circle cx={254.5} cy={88.4} r={4.6} color="#F2C14E" style="stroke" strokeWidth={1.2} />
+                <Circle cx={252.87} cy={86.77} r={1.57} color="#FFFFFF" />
+                <Circle cx={256.07} cy={90.2} r={0.6} color="#FFFFFF" />
+              </Group>
+              <Path path={S.lid} color="#0E0C12" style="stroke" strokeWidth={1.5} strokeCap="round" />
+              <Path path={S.lashes} color="#0E0C12" style="stroke" strokeWidth={1.2} strokeCap="round" />
             </Group>
-            <Path path={S.lid} color="#0E0C12" style="stroke" strokeWidth={1.5} strokeCap="round" />
-            <Path path={S.lashes} color="#0E0C12" style="stroke" strokeWidth={1.2} strokeCap="round" />
             <Group transform={carryCoinTr}><Picture picture={S.carryCoin} /></Group>
             <Group transform={carryGemTr}><Picture picture={S.carryGem} /></Group>
             <Group transform={crownTr} opacity={crownO}>
