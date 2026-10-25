@@ -10,26 +10,38 @@ import type { Ctx, Item, Mode, Settings, SkinKey } from "../model/types";
 import { FONT } from "../theme";
 import { BigAmount, Btn, Card, Chip, Field, Input, Row, Seg, Sheet, SRow, Switch, T, useTheme } from "../ui";
 
-/* ---------- log / edit: amount first (keypad opens on it), then what it was; the button stays off until both are filled in ---------- */
+/* ---------- log / edit: amount first (keypad opens on it), then what it was. Pressing the button with something missing
+   marks the missing field in red, says what's needed, and puts the cursor there. ---------- */
 export function SkipSheet({ open, onClose, title, btn, item, ctx, skin, pending, onSubmit }: { open: boolean; onClose: () => void; title: string; btn: string; item?: Item | null; ctx: Ctx; skin: SkinKey; pending: number; onSubmit: (what: string, amount: number) => void }) {
   const [what, setWhat] = useState(item ? item.what : ""); const [amt, setAmt] = useState(item ? String(item.amount) : "");
-  const a = parseAmt(amt), prob = amtProblem(amt, a), ok = a > 0 && a <= MAX_AMT && what.trim().length > 0;
+  const [tried, setTried] = useState(false);
+  const a = parseAmt(amt), prob = amtProblem(amt, a), amtOk = a > 0 && a <= MAX_AMT, whatOk = what.trim().length > 0, ok = amtOk && whatOk;
+  const missAmt = tried && !amtOk, missWhat = tried && !whatOk;
   const u = UNITS[skin];
   let fb = prob;
-  if (!fb && a > 0 && a <= MAX_AMT) {
+  if (!fb && amtOk) {
     if (item) { const d = r2(a - item.amount); fb = d ? `${d > 0 ? "+" : "−"}${fmt(Math.abs(d))} compared with before` : "Same amount as before"; }
     else { const np = pctOf(ctx.raw + a + pending, ctx.goal); fb = `You'd land at ${pctTxt(np)}${u ? ` · ${(a / (ctx.goal / u.n)).toFixed(1)} ${u.word}` : ""}`; }
   }
-  const submit = () => { if (ok) onSubmit(what.trim(), a); };
-  const whatRef = useRef<TextInput>(null);
-  const amtNext = () => { if (what.trim()) submit(); else whatRef.current?.focus(); };
+  if (!fb && missAmt) fb = "Add an amount to log it";
+  const amtRef = useRef<TextInput>(null), whatRef = useRef<TextInput>(null);
+  const submit = () => {
+    if (ok) { onSubmit(what.trim(), a); return; }
+    setTried(true);
+    (amtOk ? whatRef : amtRef).current?.focus();
+  };
+  const amtNext = () => { if (whatOk) submit(); else whatRef.current?.focus(); };
   const p = useTheme();
   return (
     <Sheet open={open} onClose={onClose} label={title}>
       <T kind="display" style={{ fontSize: 26 }}>{title}</T>
-      <Field label="How much"><BigAmount testID="la" value={amt} onChange={setAmt} autoFocus={!item} returnKeyType={what.trim() ? "done" : "next"} onSubmit={amtNext} /><T kind="semi" style={{ color: p.accent, fontSize: 14, minHeight: 20 }}>{fb}</T></Field>
-      <Field label="What was it?"><Input ref={whatRef} testID="lw" value={what} onChangeText={setWhat} maxLength={80} placeholder="Skipped a cab, or $50 into savings…" returnKeyType="done" onSubmitEditing={submit} /></Field>
-      <Btn big testID="lgo" title={ok ? `${btn} · ${item ? "" : "+"}${fmt(a)}` : btn} disabled={!ok} onPress={submit} />
+      <Field label="How much"><BigAmount ref={amtRef} testID="la" value={amt} onChange={setAmt} autoFocus={!item} invalid={missAmt} returnKeyType={whatOk ? "done" : "next"} onSubmit={amtNext} /><T kind="semi" style={{ color: missAmt ? p.err : p.accent, fontSize: 14, minHeight: 20 }}>{fb}</T></Field>
+      <Field label="What was it?">
+        <Input ref={whatRef} testID="lw" value={what} onChangeText={setWhat} maxLength={80} placeholder="Skipped a cab, or $50 into savings…" returnKeyType="done" onSubmitEditing={submit}
+          aria-invalid={missWhat || undefined} style={missWhat ? { borderColor: p.err, borderWidth: 2, ...(Platform.OS === "web" ? ({ outlineColor: p.err } as any) : null) } : undefined} />
+        {missWhat ? <T testID="lwErr" kind="semi" accessibilityLiveRegion="polite" style={{ color: p.err, fontSize: 14 }}>Add what it was to log it</T> : null}
+      </Field>
+      <Btn big testID="lgo" title={ok ? `${btn} · ${item ? "" : "+"}${fmt(a)}` : btn} dim={!ok} onPress={submit} />
     </Sheet>
   );
 }

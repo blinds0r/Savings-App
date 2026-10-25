@@ -23,11 +23,13 @@ srv.listen(0, async () => {
   await p.screenshot({ path: `${out}/03-home-empty.png` });
   // log a skip
   await p.click(tid('logBtn')); await p.waitForTimeout(500);
-  const dis0 = await p.getAttribute(tid('lgo'), 'aria-disabled');
-  await p.fill(tid('lw'), 'Uber Eats'); await p.fill(tid('la'), '50'); await p.waitForTimeout(200);
+  await p.fill(tid('la'), '50'); await p.click(tid('lgo')); await p.waitForTimeout(300);
+  const errShown = await p.isVisible(tid('lwErr')), itemsBefore = await p.isVisible(tid('lw'));
+  await p.screenshot({ path: `${out}/04a-log-missing-name.png` });
+  await p.fill(tid('lw'), 'Uber Eats'); await p.waitForTimeout(200);
+  const errGone = !(await p.isVisible(tid('lwErr')));
   await p.screenshot({ path: `${out}/04-log.png` });
-  const dis1 = await p.getAttribute(tid('lgo'), 'aria-disabled');
-  log(`log button disabled before/after: ${dis0} / ${dis1}`);
+  log(`missing name flagged / sheet stayed open / cleared on typing: ${errShown} / ${itemsBefore} / ${errGone}`);
   await p.click(tid('lgo')); await p.waitForTimeout(2500);
   await p.screenshot({ path: `${out}/05-after-add.png` });
   const amount = await p.textContent(tid('amount')); log('amount after add: ' + amount);
