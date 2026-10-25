@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Platform, View } from "react-native";
+import { Platform, TextInput, View } from "react-native";
 import * as Sharing from "expo-sharing";
 import { captureRef } from "react-native-view-shot";
 import * as Updates from "expo-updates";
@@ -10,7 +10,7 @@ import type { Ctx, Item, Mode, Settings, SkinKey } from "../model/types";
 import { FONT } from "../theme";
 import { BigAmount, Btn, Card, Chip, Field, Input, Row, Seg, Sheet, SRow, Switch, T, useTheme } from "../ui";
 
-/* ---------- log / edit: just what it was and how much; the button stays off until both are filled in ---------- */
+/* ---------- log / edit: amount first (keypad opens on it), then what it was; the button stays off until both are filled in ---------- */
 export function SkipSheet({ open, onClose, title, btn, item, ctx, skin, pending, onSubmit }: { open: boolean; onClose: () => void; title: string; btn: string; item?: Item | null; ctx: Ctx; skin: SkinKey; pending: number; onSubmit: (what: string, amount: number) => void }) {
   const [what, setWhat] = useState(item ? item.what : ""); const [amt, setAmt] = useState(item ? String(item.amount) : "");
   const a = parseAmt(amt), prob = amtProblem(amt, a), ok = a > 0 && a <= MAX_AMT && what.trim().length > 0;
@@ -21,12 +21,14 @@ export function SkipSheet({ open, onClose, title, btn, item, ctx, skin, pending,
     else { const np = pctOf(ctx.raw + a + pending, ctx.goal); fb = `You'd land at ${pctTxt(np)}${u ? ` · ${(a / (ctx.goal / u.n)).toFixed(1)} ${u.word}` : ""}`; }
   }
   const submit = () => { if (ok) onSubmit(what.trim(), a); };
+  const whatRef = useRef<TextInput>(null);
+  const amtNext = () => { if (what.trim()) submit(); else whatRef.current?.focus(); };
   const p = useTheme();
   return (
     <Sheet open={open} onClose={onClose} label={title}>
       <T kind="display" style={{ fontSize: 26 }}>{title}</T>
-      <Field label="What was it?"><Input testID="lw" value={what} onChangeText={setWhat} maxLength={80} autoFocus={!item} placeholder="Skipped a cab, or $50 into savings…" returnKeyType="next" /></Field>
-      <Field label="How much"><BigAmount testID="la" value={amt} onChange={setAmt} onSubmit={submit} /><T kind="semi" style={{ color: p.accent, fontSize: 14, minHeight: 20 }}>{fb}</T></Field>
+      <Field label="How much"><BigAmount testID="la" value={amt} onChange={setAmt} autoFocus={!item} returnKeyType={what.trim() ? "done" : "next"} onSubmit={amtNext} /><T kind="semi" style={{ color: p.accent, fontSize: 14, minHeight: 20 }}>{fb}</T></Field>
+      <Field label="What was it?"><Input ref={whatRef} testID="lw" value={what} onChangeText={setWhat} maxLength={80} placeholder="Skipped a cab, or $50 into savings…" returnKeyType="done" onSubmitEditing={submit} /></Field>
       <Btn big testID="lgo" title={ok ? `${btn} · ${item ? "" : "+"}${fmt(a)}` : btn} disabled={!ok} onPress={submit} />
     </Sheet>
   );

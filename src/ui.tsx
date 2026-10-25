@@ -63,17 +63,17 @@ export function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boo
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <View style={{ gap: 6 }}><T kind="eyebrow" style={{ fontSize: 11 }}>{label}</T>{children}</View>;
 }
-export function Input(props: TextInputProps & { big?: boolean }) {
+export function Input(props: TextInputProps & { big?: boolean; ref?: React.Ref<TextInput> }) {
   const p = useTheme();
   return <TextInput placeholderTextColor={p.muted} {...props} style={[s.input, { color: p.fg, backgroundColor: p.surface, borderColor: p.line }, props.style]} />;
 }
-export function BigAmount({ value, onChange, autoFocus, onSubmit, testID }: { value: string; onChange: (v: string) => void; autoFocus?: boolean; onSubmit?: () => void; testID?: string }) {
+export function BigAmount({ value, onChange, autoFocus, onSubmit, testID, returnKeyType = "done" }: { value: string; onChange: (v: string) => void; autoFocus?: boolean; onSubmit?: () => void; testID?: string; returnKeyType?: "done" | "next" }) {
   const p = useTheme(); const [focus, setFocus] = useState(false);
   return (
     <View style={[s.bigAmt, { borderBottomColor: focus ? p.fg : p.line }]}>
       <Text style={{ fontFamily: FONT.displayMed, fontSize: 34, color: p.muted }}>$</Text>
-      <TextInput testID={testID} value={value} onChangeText={onChange} autoFocus={autoFocus} onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} keyboardType="decimal-pad" inputMode="decimal" placeholder="0" placeholderTextColor={p.line} returnKeyType="done" onSubmitEditing={onSubmit}
-        style={{ flex: 1, fontFamily: FONT.display, fontSize: 48, color: p.fg, padding: 0, letterSpacing: -1, fontVariant: ["tabular-nums"], ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : null) }} />
+      <TextInput testID={testID} value={value} onChangeText={onChange} autoFocus={autoFocus} onFocus={() => setFocus(true)} onBlur={() => setFocus(false)} keyboardType="decimal-pad" inputMode="decimal" placeholder="0" placeholderTextColor={p.line} returnKeyType={returnKeyType} submitBehavior={returnKeyType === "next" ? "submit" : undefined} onSubmitEditing={onSubmit}
+        style={{ flex: 1, minWidth: 0, fontFamily: FONT.display, fontSize: 48, color: p.fg, padding: 0, letterSpacing: -1, fontVariant: ["tabular-nums"], ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : null) }} />
     </View>
   );
 }
