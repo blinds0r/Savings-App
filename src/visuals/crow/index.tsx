@@ -1,9 +1,8 @@
 /* Crow's hoard: a crow guarding an open treasure chest (port of the prototype's visuals/crow.js).
  * Chosen options: idle "Admiring", add "Arc away" (realistic flight), milestone "Victory caw + crown",
- * background "Dusty attic" (backgrounds/crow.js [3]). The crow herself is the "Glossy, softer" redesign, leaner and cuter (L2), wearing a clover
- * necklace whose pendant swings on a damped pendulum as she moves. */
+ * background "Dusty attic" (backgrounds/crow.js [3]). */
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
-import { Atlas, Canvas, Circle, DashPathEffect, Group, LinearGradient, Oval, Path, Picture, Rect, RoundedRect, Skia, PaintStyle, StrokeCap, TileMode, Text, createPicture, useColorBuffer, useFont, useRSXformBuffer, vec, type SkCanvas, type SkFont, type SkPicture, type SkRect } from "@shopify/react-native-skia";
+import { Atlas, Canvas, Circle, Group, LinearGradient, Oval, Path, Picture, Rect, RoundedRect, Skia, PaintStyle, StrokeCap, TileMode, Text, createPicture, useColorBuffer, useFont, useRSXformBuffer, vec, type SkCanvas, type SkFont, type SkPicture, type SkRect } from "@shopify/react-native-skia";
 import { cancelAnimation, runOnJS, useDerivedValue, useFrameCallback, useSharedValue, withTiming, Easing, type SharedValue , ReduceMotion } from "react-native-reanimated";
 import type { SceneHandle, SceneProps, VisualDef } from "../contract";
 import { fitBox } from "../contract";
@@ -37,10 +36,7 @@ function newSpots(s: VisualState, k: number): Coin[] {
   while (fresh.length < k) fresh.push({ x: 110 + Math.random() * 130, y: 166 + Math.random() * 6, r: 8, sq: 0.5, rot: 0 });
   return fresh.slice(0, k);
 }
-const BEAK = { x: 225, y: 97 };
-/** L2 proportions: body slimmed about the feet, head scaled up about the neck. */
-const LEAN = [{ translateX: 287 }, { translateY: 146 }, { scaleX: 0.86 }, { scaleY: 0.82 }, { translateX: -287 }, { translateY: -146 }];
-const HEAD_UP = [{ translateX: 262 }, { translateY: 100 }, { scale: 1.1 }, { translateX: -262 }, { translateY: -100 }];
+const BEAK = { x: 221, y: 99 };
 
 /* ---------- idle schedules ---------- */
 const PEEK = intervals(7, 8, 3, 5), BLINK = intervals(8, 7, 2.8, 5.2);
@@ -113,45 +109,6 @@ function pose(ms: number): Pose {
 /* ---------- milestone (ms) ---------- */
 const MS_DUR = 2800, CROWN_AT = 700, CROWN_D = 850, CAW_AT = 350;
 
-/** The crow's whole-body transform at a moment: [x, y, angle°, scaleX, scaleY, originX, originY]. */
-function bodyAt(addMs: number, msMs: number, k: number): number[] {
-  "worklet";
-  let x = 0, y = 0, ang = 0, sx = 1, sy = 1, ox = 280, oy = 150;
-  if (addMs >= 0) {
-    const p = pose(addMs); x = p.x; y = p.y; ang = p.ang; sx = p.sx; sy = p.sy; ox = p.ox; oy = p.oy;
-    const hp = hop(addMs - dropEnd(Math.max(1, k)) - HOP_AT); y += hp.y; sx *= hp.sx; sy *= hp.sy;
-  } else if (msMs >= 0 && msMs <= 1700) {
-    const e = easeOut(msMs / 1700), o = [0, 0.3, 0.5, 0.7, 1];
-    x = kf(e, o, [0, -10, -8, -9, 0]); sx = sy = kf(e, o, [1, 1.18, 1.12, 1.15, 1]);
-  }
-  return [x, y, ang, sx, sy, ox, oy];
-}
-
-/* ---------- necklace: a fine gold chain and a black clover pendant on a damped pendulum ---------- */
-// pivot at the throat; the bail (where the chain meets the pendant) hangs len below it at rest
-const NECK = { px: 260, py: 105, len: 15.4, bx: 260, by: 120.4, g: 1650, damp: 2.6, amax: 6000 };
-/** Four round onyx lobes in a beaded gold rim with a loop on top; drawn with the loop's top at (0,0). */
-function drawClover(c: SkCanvas) {
-  const p = Skia.Paint(); p.setAntiAlias(true);
-  const cx = 0, cy = 7.1, o = 2.25, r = 2.35;
-  const C = [[cx, cy - o], [cx + o, cy], [cx, cy + o], [cx - o, cy]];
-  p.setColor(Skia.Color("#D9A43A"));
-  for (const [x, y] of C) c.drawCircle(x, y, r + 0.95, p);
-  c.drawCircle(cx, cy, o * 0.9, p);
-  p.setColor(Skia.Color("#F6DC8E"));
-  for (const [x, y] of C) for (let j = 0; j < 18; j++) {
-    const a = (2 * Math.PI * j) / 18, bx = x + (r + 0.62) * Math.cos(a), by = y + (r + 0.62) * Math.sin(a);
-    if (C.every(([X, Y]) => (X === x && Y === y) || Math.hypot(bx - X, by - Y) >= r + 0.5)) c.drawCircle(bx, by, 0.36, p);
-  }
-  p.setColor(Skia.Color("#0E0D12"));
-  for (const [x, y] of C) c.drawCircle(x, y, r, p);
-  c.drawCircle(cx, cy, o * 0.8, p);
-  const hi = Skia.Paint(); hi.setAntiAlias(true); hi.setStyle(PaintStyle.Stroke); hi.setStrokeWidth(0.7); hi.setStrokeCap(StrokeCap.Round); hi.setColor(Skia.Color("rgba(255,255,255,0.35)"));
-  c.drawPath(Skia.Path.MakeFromSVGString(`M${cx - o - 1.2} ${cy - 0.6} Q${cx - o} ${cy - o - 0.4} ${cx - 0.6} ${cy - o - 1.3}`)!, hi);
-  const ring = Skia.Paint(); ring.setAntiAlias(true); ring.setStyle(PaintStyle.Stroke); ring.setStrokeWidth(0.6); ring.setColor(Skia.Color("#D9A43A"));
-  c.drawOval(Skia.XYWHRect(-0.85, 0.0, 1.7, 2.5), ring);
-}
-
 /* ---------- pre-rolled randomness ---------- */
 const R = seeded(77);
 const PKA: number[] = [], PKD: number[] = [], PKS: number[] = [], PKT: number[] = [];
@@ -222,26 +179,15 @@ function useStatics() {
     const carryCoin = coinPicture(7, { sq: 0.9, rot: 15 });
     const carryGem = createPicture((c) => drawGem(c, 0, 0, 1, 15, 0.9), Skia.XYWHRect(-12, -12, 24, 24));
     const attic = atticPicture();
-    const clover = createPicture(drawClover, Skia.XYWHRect(-7, -1, 14, 16));
     return {
-      sheet, sprites: fxSprites, moteSprites, ax, ay, beams: beams.build(), crown, carryCoin, carryGem, attic, clover,
+      sheet, sprites: fxSprites, moteSprites, ax, ay, beams: beams.build(), crown, carryCoin, carryGem, attic,
       lid1: P("M60 150 L76 92 Q173 68 270 92 L286 150 Z"), lid2: P("M74 146 L86 102 Q173 82 260 102 L272 146 Z"), lid3: P("M90 140 L98 108 Q173 92 248 108 L256 140"),
       lidS1: P("M104 150 L114 88 L128 86 L118 150 Z"), lidS2: P("M242 150 L232 86 L218 86 L228 150 Z"),
       lockT: P("M171.5 264 L174.5 264 L175.5 272 L170.5 272 Z"), seam: P("M62 265 H284"), trimL: P("M51 150 V272 M295 150 V272"),
-      // the crow: "Glossy, softer" (A2) — one smooth body, layered wing, small fine beak, lashes and a plum sheen
-      tail: P("M304 122 L343 129 L340 134 L345 138 L339 141 L342 145 L302 138 Z"),
-      body: P("M250 99 C245 119 255 139 277 145 C293 149 307 141 313 129 C318 110 307 89 287 88 C272 87.5 257 92 250 99 Z"),
-      sheen: P("M258 96 C282 86 310 97 314 117 C301 104 284 98 258 101 Z"),
-      chest: P("M256 116 q4 3 8 1 M258 126 q4 3 8 1 M263 135 q4 3 8 1"),
-      wing: P("M270 108 C290 97 316 104 329 127 C318 133 299 133 276 126 C269 122 267 114 270 108 Z"),
-      wingHi: P("M275 110 C289 104 304 107 312 116 C300 116 287 117 276 118 Z"),
-      wingP: P("M297 121 L329 127 M292 124 L322 130 M302 117 L327 123"), wingC: P("M279 110 q5 4 10 1 q5 4 10 1"),
-      legs: P("M282 143 L280 152 M293 143 L295 152"),
-      toes: P("M273 154 Q276 150 281 151 Q285 150 287 154 M288 154 Q291 150 296 151 Q300 150 302 154"),
-      beak: P("M252 87.5 C241.5 87 234 90.5 227.5 96.8 C234.5 98.8 241.5 100.2 252 100.5 Z"),
-      beakHi: P("M247 88.3 C241 89 235 92 229.5 96.3"), beakL: P("M247.5 95.6 C241.5 96.8 235 97.5 228.5 97.4"),
-      bristles: P("M248.5 86.2 L243.5 88.6 M249.5 88.4 L245 90.6"), crestHi: P("M248 81 C254 77 262 77 268 81"),
-      lid: P("M250.2 86.6 Q254.5 82.6 258.9 86.4"), lashes: P("M251 85.6 Q249.4 83.6 248 83.3 M252.9 84.4 Q252 82 250.9 81.2 M255.2 84 Q255.3 81.5 254.7 80.4"),
+      tail: P("M300 118 L340 130 L336 140 L296 132 Z"), tailL: P("M306 124 L334 132"), belly: P("M262 124 Q270 138 290 141"),
+      wing: P("M268 110 Q300 96 320 124 Q296 132 270 126 Z"), wingL: P("M276 112 Q296 108 308 122"),
+      legs: P("M280 140 L278 150 M290 140 L292 150 M272 150 L284 150 M286 150 L298 150"),
+      beak: P("M245 89 L220 98 L245 102 Z"), beakL: P("M245 95 L222 98"),
       crownHi: P("M-9 -2 L-9 -8 L-5 -4"),
       pileClip: Skia.XYWHRect(62, 158, 222, 100),
     };
@@ -369,50 +315,16 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function CrowScene({ state, wi
   const addMs = useDerivedValue(() => (addT.value > 0 ? addT.value * addDur.value : -1));
   const msMs = useDerivedValue(() => (msT.value > 0 ? msT.value * MS_DUR : -1));
   const crowTr = useDerivedValue(() => {
-    const [x, y, ang, sx, sy, ox, oy] = bodyAt(addMs.value, msMs.value, kSV.value);
-    return [{ translateX: ox + x }, { translateY: oy + y }, { rotate: rad(ang) }, { scaleX: sx }, { scaleY: sy }, { translateX: -ox }, { translateY: -oy }];
-  });
-
-  /* ---- necklace physics: the pendant is a damped pendulum hung from the throat. Each frame the pivot's motion
-   * (from the crow's hop, flight, turns and landing) is turned into an acceleration in the crow's own frame and
-   * the pendant swings against it, then settles under gravity. ---- */
-  const sw = useSharedValue([0, 0, 0, 0, 0, 0, 0]); // theta, omega, prev pivot x, y, prev vel x, y, primed
-  useFrameCallback((f) => {
-    const dt = Math.min(f.timeSincePreviousFrame ?? 16, 50) / 1000;
-    if (dt <= 0) return;
-    const am = addT.value > 0 ? addT.value * addDur.value : -1, mm = msT.value > 0 ? msT.value * MS_DUR : -1;
-    const [x, y, ang, sx, sy, ox, oy] = bodyAt(am, mm, kSV.value);
-    const a = rad(ang), ca = Math.cos(a), sa = Math.sin(a);
-    const lx = sx * (NECK.px - ox), ly = sy * (NECK.py - oy);
-    const px = ox + x + ca * lx - sa * ly, py = oy + y + sa * lx + ca * ly;
-    const s = sw.value.slice();
-    if (!s[6]) { s[2] = px; s[3] = py; s[6] = 1; }
-    const vx = (px - s[2]) / dt, vy = (py - s[3]) / dt;
-    let ax = (vx - s[4]) / dt, ay = (vy - s[5]) / dt;
-    ax = clamp(ax, -NECK.amax, NECK.amax); ay = clamp(ay, -NECK.amax, NECK.amax);
-    // effective gravity minus pivot acceleration, taken into the crow's (possibly mirrored, scaled) frame
-    const gx = -ax, gy = NECK.g - ay;
-    let lgx = ca * gx + sa * gy;
-    const lgy = -sa * gx + ca * gy;
-    if (sx < 0) lgx = -lgx;
-    const sc = Math.max(Math.abs(sx), 0.35);
-    let th = s[0], om = s[1];
-    const n = 3, h = dt / n;
-    for (let i = 0; i < n; i++) {
-      const acc = ((lgx / sc) * Math.cos(th) - (lgy / sc) * Math.sin(th)) / NECK.len - NECK.damp * om;
-      om += acc * h; th += om * h;
+    let x = 0, y = 0, ang = 0, sx = 1, sy = 1, ox = 280, oy = 150;
+    if (addMs.value >= 0) {
+      const p = pose(addMs.value); x = p.x; y = p.y; ang = p.ang; sx = p.sx; sy = p.sy; ox = p.ox; oy = p.oy;
+      const hp = hop(addMs.value - dropEnd(Math.max(1, kSV.value)) - HOP_AT); y += hp.y; sx *= hp.sx; sy *= hp.sy;
     }
-    th = clamp(th, -1.15, 1.15);
-    sw.value = [th, om, px, py, vx, vy, 1];
-  });
-  const bail = useDerivedValue(() => { const th = sw.value[0]; return [NECK.px + NECK.len * Math.sin(th), NECK.py + NECK.len * Math.cos(th), th]; });
-  const pendTr = useDerivedValue(() => { const b = bail.value; return [{ translateX: b[0] }, { translateY: b[1] }, { rotate: b[2] * -1 }]; });
-  const chainPath = useDerivedValue(() => {
-    const b = bail.value, dx = b[0] - NECK.bx, dy = b[1] - NECK.by;
-    const p = Skia.Path.Make();
-    p.moveTo(256, 107.5); p.quadTo(255.5 + 0.45 * dx, 118.5 + 0.45 * dy, b[0], b[1]);
-    p.moveTo(266.5, 104.5); p.quadTo(265.5 + 0.45 * dx, 118 + 0.45 * dy, b[0], b[1]);
-    return p;
+    else if (msMs.value >= 0 && msMs.value <= 1700) {
+      const e = easeOut(msMs.value / 1700), o = [0, 0.3, 0.5, 0.7, 1];
+      x = kf(e, o, [0, -10, -8, -9, 0]); sx = sy = kf(e, o, [1, 1.18, 1.12, 1.15, 1]);
+    }
+    return [{ translateX: ox + x }, { translateY: oy + y }, { rotate: rad(ang) }, { scaleX: sx }, { scaleY: sy }, { translateX: -ox }, { translateY: -oy }];
   });
   const wingTr = useDerivedValue(() => [{ rotate: addMs.value >= 0 ? rad(pose(addMs.value).wing + hop(addMs.value - dropEnd(Math.max(1, kSV.value)) - HOP_AT).wing) : 0 }]);
   const legsTr = useDerivedValue(() => { if (addMs.value < 0) return [{ scaleY: 1 }]; const p = pose(addMs.value); return [{ rotate: rad(p.legRot) }, { scaleY: p.legSy }]; });
@@ -443,7 +355,7 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function CrowScene({ state, wi
   const carryGemTr = useDerivedValue(() => (addMs.value >= T_BACK && addMs.value < T_DROP && carryGem.value ? [{ translateX: BEAK.x }, { translateY: BEAK.y + 2 }] : OFF));
   const crownTr = useDerivedValue(() => {
     const p = clamp((msMs.value - CROWN_AT) / CROWN_D, 0, 1), e = easeOut(p), o = [0, 0.6, 0.76, 1];
-    return [{ translateX: 257 }, { translateY: 77 }, { scale: 1.55 }, { translateY: kf(e, o, [-110, 0, -8, 0]) }, { rotate: rad(kf(e, o, [-30, 6, -4, 0])) }];
+    return [{ translateX: 258 }, { translateY: 80 }, { scale: 1.55 }, { translateY: kf(e, o, [-110, 0, -8, 0]) }, { rotate: rad(kf(e, o, [-30, 6, -4, 0])) }];
   });
   const crownO = useDerivedValue(() => { if (msMs.value < CROWN_AT) return 0; const p = clamp((msMs.value - CROWN_AT) / CROWN_D, 0, 1); return kf(easeOut(p), [0, 0.2, 1], [0, 1, 1]); });
   const lidTr = useDerivedValue(() => {
@@ -529,51 +441,27 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function CrowScene({ state, wi
         </Path>
         {/* the crow */}
         <Group transform={crowTr}>
-          {/* L2 "leaner and cuter": the body is slimmed toward the feet, the head drawn 10% bigger */}
-          <Group transform={LEAN}>
-            <Path path={S.tail} color="#17151D" />
-            <Path path={S.body}>
-              <LinearGradient start={vec(0, 88)} end={vec(0, 148)} colors={["#2C2838", "#15131B"]} />
-            </Path>
-            <Path path={S.sheen}>
-              <LinearGradient start={vec(258, 86)} end={vec(314, 117)} colors={["rgba(164,123,192,0.55)", "rgba(75,127,168,0)"]} />
-            </Path>
-            <Path path={S.chest} color="#38334A" style="stroke" strokeWidth={1.2} strokeCap="round" />
-            <Group origin={vec(276, 112)} transform={wingTr}>
-              <Path path={S.wing} color="#2B2736" />
-              <Path path={S.wingHi} color="#363145" />
-              <Path path={S.wingP} color="#1A1822" style="stroke" strokeWidth={1.3} strokeCap="round" />
-              <Path path={S.wingC} color="#4A4460" style="stroke" strokeWidth={1.1} />
-            </Group>
+          <Path path={S.tail} color="#1C1A22" />
+          <Path path={S.tailL} color="#3A3646" style="stroke" strokeWidth={1.2} />
+          <Group origin={vec(284, 120)} transform={[{ rotate: rad(-18) }]}>
+            <Oval x={253} y={98} width={62} height={44} color="#22202A" />
           </Group>
-          <Group origin={vec(287, 143)} transform={legsTr}>
-            <Path path={S.legs} color="#2F2C36" style="stroke" strokeWidth={2.6} strokeCap="round" />
-            <Path path={S.toes} color="#2F2C36" style="stroke" strokeWidth={2.4} strokeCap="round" />
+          <Path path={S.belly} color="#3A3646" style="stroke" strokeWidth={1.5} />
+          <Group origin={vec(276, 112)} transform={wingTr}>
+            <Path path={S.wing} color="#35313F" />
+            <Path path={S.wingL} color="#4A4555" style="stroke" strokeWidth={1.5} />
           </Group>
-          {/* the necklace: chain links (a dashed gold line over a darker core) and the swinging clover */}
-          <Path path={chainPath} color="#8A6418" style="stroke" strokeWidth={0.55} />
-          <Path path={chainPath} color="#E9C46A" style="stroke" strokeWidth={0.95} strokeCap="round">
-            <DashPathEffect intervals={[1.3, 0.55]} />
-          </Path>
-          <Group transform={pendTr}><Picture picture={S.clover} /></Group>
+          <Group origin={vec(285, 140)} transform={legsTr}>
+            <Path path={S.legs} color="#45414E" style="stroke" strokeWidth={3} strokeCap="round" />
+          </Group>
           <Group origin={vec(263.2, 106.8)} transform={headTr}>
-            <Group transform={HEAD_UP}>
-              <Path path={S.beak} color="#2E2B35" />
-              <Circle cx={257.5} cy={92} r={15.5} color="#1D1B24" />
-              <Path path={S.crestHi} color="#A47BC0" style="stroke" strokeWidth={2.2} strokeCap="round" opacity={0.6} />
-              <Path path={S.beakHi} color="#5E5770" style="stroke" strokeWidth={1.1} strokeCap="round" />
-              <Path path={S.beakL} color="#121016" style="stroke" strokeWidth={0.9} />
-              <Path path={S.bristles} color="#1D1B24" style="stroke" strokeWidth={1.4} strokeCap="round" />
-              <Oval x={257.5} y={97.2} width={8} height={4.6} color="#E594B4" opacity={0.4} />
-              {/* the dark eye with catchlights, ringed in gold */}
-              <Group origin={vec(254.5, 88.4)} transform={eyeTr}>
-                <Circle cx={254.5} cy={88.4} r={4.6} color="#120F16" />
-                <Circle cx={254.5} cy={88.4} r={4.6} color="#F2C14E" style="stroke" strokeWidth={1.2} />
-                <Circle cx={252.87} cy={86.77} r={1.57} color="#FFFFFF" />
-                <Circle cx={256.07} cy={90.2} r={0.6} color="#FFFFFF" />
-              </Group>
-              <Path path={S.lid} color="#0E0C12" style="stroke" strokeWidth={1.5} strokeCap="round" />
-              <Path path={S.lashes} color="#0E0C12" style="stroke" strokeWidth={1.2} strokeCap="round" />
+            <Circle cx={258} cy={94} r={16} color="#22202A" />
+            <Path path={S.beak} color="#45414E" />
+            <Path path={S.beakL} color="#2B2833" style="stroke" strokeWidth={1} />
+            <Group origin={vec(253, 90)} transform={eyeTr}>
+              <Circle cx={253} cy={90} r={4} color="#F2C14E" />
+              <Circle cx={252.5} cy={90} r={2.2} color="#0D0C10" />
+              <Circle cx={251.6} cy={89} r={0.8} color="#FFFFFF" />
             </Group>
             <Group transform={carryCoinTr}><Picture picture={S.carryCoin} /></Group>
             <Group transform={carryGemTr}><Picture picture={S.carryGem} /></Group>

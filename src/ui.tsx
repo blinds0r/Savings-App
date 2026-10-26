@@ -60,14 +60,15 @@ export function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boo
 }
 
 /* ---------- fields ---------- */
+export type TextInputRef = React.ComponentRef<typeof TextInput>;
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <View style={{ gap: 6 }}><T kind="eyebrow" style={{ fontSize: 11 }}>{label}</T>{children}</View>;
 }
-export function Input(props: TextInputProps & { big?: boolean; ref?: React.Ref<TextInput> }) {
+export function Input(props: TextInputProps & { big?: boolean; ref?: React.Ref<TextInputRef> }) {
   const p = useTheme();
   return <TextInput placeholderTextColor={p.muted} {...props} style={[s.input, { color: p.fg, backgroundColor: p.surface, borderColor: p.line }, props.style]} />;
 }
-export function BigAmount({ value, onChange, autoFocus, onSubmit, testID, returnKeyType = "done", invalid, ref }: { value: string; onChange: (v: string) => void; autoFocus?: boolean; onSubmit?: () => void; testID?: string; returnKeyType?: "done" | "next"; invalid?: boolean; ref?: React.Ref<TextInput> }) {
+export function BigAmount({ value, onChange, autoFocus, onSubmit, testID, returnKeyType = "done", invalid, ref }: { value: string; onChange: (v: string) => void; autoFocus?: boolean; onSubmit?: () => void; testID?: string; returnKeyType?: "done" | "next"; invalid?: boolean; ref?: React.Ref<TextInputRef> }) {
   const p = useTheme(); const [focus, setFocus] = useState(false);
   return (
     <View style={[s.bigAmt, { borderBottomColor: invalid ? p.err : focus ? p.fg : p.line }]}>

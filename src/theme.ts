@@ -17,6 +17,7 @@ export const PALETTES: Record<SkinKey, Palette> = {
   firefly: { bg: "#0D1330", surface: "#151C40", surface2: "#121939", fg: "#EAF0FF", muted: "#9AA6CF", line: "#27305A", accent: "#E6F57A", btnBg: "#E6F57A", btnFg: "#0D1330", msHit: "#E6F57A", msHitEdge: "#E6F57A", msNext: "#EAF0FF", msOff: "#3A4475", ico: "#F4FF9E", icoEdge: "#F4FF9E", err: "#FF8A80", dark: true },
   tree: { bg: "#E3EEDC", surface: "#F2F7EE", surface2: "#EAF2E4", fg: "#26301F", muted: "#55654C", line: "#CCDCC3", accent: "#2F6F73", btnBg: "#2F6F73", btnFg: "#FFFFFF", msHit: "#4FA66A", msHitEdge: "#2F8F57", msNext: "#2F6F73", msOff: "#C9B8A5", ico: "#5DBB7A", icoEdge: "#2F8F57", err: "#C62828", dark: false },
   galaxy: { bg: "#0B0A1A", surface: "#14122A", surface2: "#110F24", fg: "#F3EEFF", muted: "#A49DCF", line: "#2A2650", accent: "#FFD9A8", btnBg: "#FFD9A8", btnFg: "#0B0A1A", msHit: "#FFD9A8", msHitEdge: "#FFD9A8", msNext: "#F3EEFF", msOff: "#4A4580", ico: "#FFD9A8", icoEdge: "#FFD9A8", err: "#FF8A80", dark: true },
+  rocket: { bg: "#343E4D", surface: "#3E4A5B", surface2: "#394454", fg: "#F1F4F8", muted: "#AEB8C6", line: "#55627A", accent: "#F2C14E", btnBg: "#F2C14E", btnFg: "#1E2530", msHit: "#F2C14E", msHitEdge: "#F2C14E", msNext: "#F1F4F8", msOff: "#5E6B80", ico: "#F2C14E", icoEdge: "#F2C14E", err: "#FF8A80", dark: true },
 };
 
 export const FONT = { display: "BricolageGrotesque_800ExtraBold", displayMed: "BricolageGrotesque_700Bold", body: "Figtree_400Regular", bodyMed: "Figtree_500Medium", bodySemi: "Figtree_600SemiBold", bodyBold: "Figtree_700Bold" };

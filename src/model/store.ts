@@ -10,7 +10,7 @@ const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 const KEY_ITEMS = "skippedit.items", KEY_SETTINGS = "skippedit.settings";
 
-const SKIN_KEYS: SkinKey[] = ["glass", "crow", "summit", "firefly", "tree", "galaxy"];
+const SKIN_KEYS: SkinKey[] = ["glass", "crow", "summit", "firefly", "tree", "galaxy", "rocket"];
 const pos = (v: unknown, d: number) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : d);
 /** Fill in missing keys and drop values the app cannot render (an old or unknown skin key, a bad mode or amount), so one stale entry never bricks launch. */
 export const mergeSettings = (s: Partial<Settings> | null | undefined): Settings => {

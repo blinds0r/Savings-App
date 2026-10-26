@@ -15,6 +15,7 @@ const TOTAL_INK: Record<SkinKey, { label: string; value: string; badge: string; 
   firefly: { label: "rgba(13,19,48,0.7)", value: "#0D1330", badge: "#0D1330", arrow: "#E6F57A" },
   tree: { label: "rgba(255,255,255,0.7)", value: "#FFFFFF", badge: "#BFE5C9", arrow: "#2F6F73" },
   galaxy: { label: "rgba(11,10,26,0.7)", value: "#0B0A1A", badge: "#0B0A1A", arrow: "#FFD9A8" },
+  rocket: { label: "rgba(30,37,48,0.7)", value: "#1E2530", badge: "#1E2530", arrow: "#F2C14E" },
 };
 
 function Arrow({ color }: { color: string }) {

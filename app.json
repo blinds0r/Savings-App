@@ -2,7 +2,7 @@
   "expo": {
     "name": "Skipped It",
     "slug": "savings-app",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "scheme": "skippedit",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -59,7 +59,8 @@
             "enableShrinkResourcesInReleaseBuilds": true
           }
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "extra": {
       "eas": {
