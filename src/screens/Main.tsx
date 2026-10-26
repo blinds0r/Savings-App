@@ -124,7 +124,9 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
   }, [ctx.total, ctx.goal, s.ackGoal, s.mode, preview, goalDismissed, sheet, settled]);
 
   const closeSheet = () => { if (sheet === "goal" && !goalDemo) setGoalDismissed(ctx.goal); setSheet(null); setEditing(null); };
-  const logSkip = (what: string, amount: number) => { setSheet(null); if (preview != null) { playAdd(amount, what); return; } setPending((v) => r2(v + amount)); store.addItem(what, amount); playAdd(amount, what); };
+  /* Logging is always real: if a preview is showing, leave it first so the entry is saved (it used to vanish with the preview). */
+  const openLog = () => { if (preview != null) { interrupt(); setPreview(null); } setEditing(null); setSheet("log"); };
+  const logSkip = (what: string, amount: number) => { setSheet(null); if (preview != null) { interrupt(); setPreview(null); } setPending((v) => r2(v + amount)); store.addItem(what, amount); playAdd(amount, what); };
   const saveEdit = (what: string, amount: number) => { if (editing) store.updateItem(editing.id, { what, amount }); setSheet(null); setEditing(null); showToast("Updated"); };
 
   // derived display
@@ -248,7 +250,7 @@ function Home({ items, settings: s }: { items: Item[]; settings: Settings }) {
           </View>
         </ScrollView>
 
-        <View style={[st.fab, { bottom: ins.bottom + 18 }]}><Btn big testID="logBtn" title={cfg.btn} icon={<Glyph kind="plus" color={p.btnFg} />} onPress={() => { setEditing(null); setSheet("log"); }} style={st.fabBtn} /></View>
+        <View style={[st.fab, { bottom: ins.bottom + 18 }]}><Btn big testID="logBtn" title={cfg.btn} icon={<Glyph kind="plus" color={p.btnFg} />} onPress={openLog} style={st.fabBtn} /></View>
         <Toast msg={toast} />
 
         <SkipSheet key={`log-${sheetGen}`} open={sheet === "log"} onClose={closeSheet} title="Skip or save" btn={cfg.btn} ctx={ctx} skin={s.skin} pending={pending} onSubmit={logSkip} />

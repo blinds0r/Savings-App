@@ -556,7 +556,8 @@ const Scene = forwardRef<SceneHandle, SceneProps>(function RocketScene({ state, 
   const plume = useMemo(() => plumeImages(k), [k]);
   const CL = useMemo(() => cloudLayout(k), [k]);
   const V = useMemo(() => vapourLayout(pct), [pct]);
-  const stRef = useRef(state); stRef.current = state;
+  const stRef = useRef(state);
+  useEffect(() => { stRef.current = state; }, [state]);
 
   const clock = useSharedValue(0);
   // Accumulate deltas: timeSinceFirstFrame restarts whenever the callback is re-registered.
