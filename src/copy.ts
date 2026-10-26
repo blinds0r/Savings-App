@@ -22,6 +22,9 @@ export const SKINS: Record<SkinKey, SkinCopy> = {
   galaxy: { name: "Galaxy", swatch: ["#0B0A1A", "#FFD9A8"], ms: "regions", word: "lit", desc: (g) => `A star per ${unitOf(g, 150)}`,
     eyebrow: (g) => `Galaxy · a star per ${unitOf(g, 150)}`, listTitle: "Stars lit", btn: "Light a star", toast: "New star for",
     sub: (c) => `${countOf(c.pct, 150)} of 150 stars lit · ${pctTxt(c.pct)} of the way`, overText: (s) => `${fmt(s)} forming a second galaxy` },
+  rocket: { name: "Launch pad", swatch: ["#343E4D", "#F2C14E"], ms: null, word: "fuelled", desc: () => "Fuel a rocket for liftoff",
+    eyebrow: () => "Launch pad", listTitle: "Fuel log", btn: "Add fuel", toast: "Fuelled up",
+    sub: (c) => `Tank ${pctTxt(c.pct)} full · ${fmt(r2(c.goal - c.t))} to liftoff`, overText: (s) => `${fmt(s)} past liftoff, still climbing` },
 };
-export const OVER_NOUN: Record<SkinKey, string> = { glass: "coins spilling out around the pig", crow: "treasure piled around the chest", summit: "a balloon rising above the summit", firefly: "fireflies glowing outside the jar", tree: "leaves gathering on the ground", galaxy: "a second galaxy forming" };
+export const OVER_NOUN: Record<SkinKey, string> = { glass: "coins spilling out around the pig", crow: "treasure piled around the chest", summit: "a balloon rising above the summit", firefly: "fireflies glowing outside the jar", tree: "leaves gathering on the ground", galaxy: "a second galaxy forming", rocket: "the rocket climbing higher" };
 export const SKIN_KEYS = Object.keys(SKINS) as SkinKey[];

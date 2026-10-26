@@ -6,6 +6,7 @@ import { DEF as SUMMIT } from "./summit";
 import { DEF as FIREFLY } from "./firefly";
 import { DEF as TREE } from "./tree";
 import { DEF as GALAXY } from "./galaxy";
+import { DEF as ROCKET } from "./rocket";
 
 /** All visuals by key (the app's skin keys). */
-export const VISUALS: Record<string, VisualDef> = { probe: PROBE, glass: PIG, crow: CROW, summit: SUMMIT, firefly: FIREFLY, tree: TREE, galaxy: GALAXY };
+export const VISUALS: Record<string, VisualDef> = { probe: PROBE, glass: PIG, crow: CROW, summit: SUMMIT, firefly: FIREFLY, tree: TREE, galaxy: GALAXY, rocket: ROCKET };

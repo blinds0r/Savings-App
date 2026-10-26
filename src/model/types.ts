@@ -1,4 +1,4 @@
-export type SkinKey = "glass" | "crow" | "summit" | "firefly" | "tree" | "galaxy";
+export type SkinKey = "glass" | "crow" | "summit" | "firefly" | "tree" | "galaxy" | "rocket";
 export type Mode = "target" | "monthly";
 
 export interface Item {

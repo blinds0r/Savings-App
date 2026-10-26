@@ -8,7 +8,7 @@ import { SKINS, SKIN_KEYS, OVER_NOUN } from "../copy";
 import { amtProblem, fmt, parseAmt, pctOf, pctTxt, r2, UNITS, MAX_AMT } from "../model/logic";
 import type { Ctx, Item, Mode, Settings, SkinKey } from "../model/types";
 import { FONT } from "../theme";
-import { BigAmount, Btn, Card, Chip, Field, Input, Row, Seg, Sheet, SRow, Switch, T, useTheme } from "../ui";
+import { TextInputRef, BigAmount, Btn, Card, Chip, Field, Input, Row, Seg, Sheet, SRow, Switch, T, useTheme } from "../ui";
 
 /* ---------- log / edit: amount first (keypad opens on it), then what it was. Pressing the button with something missing
    marks the missing field in red, says what's needed, and puts the cursor there. ---------- */
@@ -24,7 +24,7 @@ export function SkipSheet({ open, onClose, title, btn, item, ctx, skin, pending,
     else { const np = pctOf(ctx.raw + a + pending, ctx.goal); fb = `You'd land at ${pctTxt(np)}${u ? ` · ${(a / (ctx.goal / u.n)).toFixed(1)} ${u.word}` : ""}`; }
   }
   if (!fb && missAmt) fb = "Add an amount to log it";
-  const amtRef = useRef<TextInput>(null), whatRef = useRef<TextInput>(null);
+  const amtRef = useRef<TextInputRef>(null), whatRef = useRef<TextInputRef>(null);
   const submit = () => {
     if (ok) { onSubmit(what.trim(), a); return; }
     setTried(true);
@@ -35,7 +35,7 @@ export function SkipSheet({ open, onClose, title, btn, item, ctx, skin, pending,
   return (
     <Sheet open={open} onClose={onClose} label={title}>
       <T kind="display" style={{ fontSize: 26 }}>{title}</T>
-      <Field label="How much"><BigAmount ref={amtRef} testID="la" value={amt} onChange={setAmt} autoFocus={!item} invalid={missAmt} returnKeyType={whatOk ? "done" : "next"} onSubmit={amtNext} /><T kind="semi" style={{ color: missAmt ? p.err : p.accent, fontSize: 14, minHeight: 20 }}>{fb}</T></Field>
+      <Field label="How much did you forego?"><BigAmount ref={amtRef} testID="la" value={amt} onChange={setAmt} autoFocus={!item} invalid={missAmt} returnKeyType={whatOk ? "done" : "next"} onSubmit={amtNext} /><T kind="semi" style={{ color: missAmt ? p.err : p.accent, fontSize: 14, minHeight: 20 }}>{fb}</T></Field>
       <Field label="What was it?">
         <Input ref={whatRef} testID="lw" value={what} onChangeText={setWhat} maxLength={80} placeholder="Skipped a cab, or $50 into savings…" returnKeyType="done" onSubmitEditing={submit}
           aria-invalid={missWhat || undefined} style={missWhat ? { borderColor: p.err, borderWidth: 2, ...(Platform.OS === "web" ? ({ outlineColor: p.err } as any) : null) } : undefined} />
